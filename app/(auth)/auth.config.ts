@@ -1,14 +1,5 @@
-import type { NextAuthConfig } from "next-auth";
+// Canonical config lives in the project root auth.ts.
+// This file is kept for any remaining imports of auth.config.
 
-const base = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
-
-export const authConfig = {
-  basePath: "/api/auth",
-  trustHost: true,
-  pages: {
-    signIn: `${base}/login`,
-    newUser: `${base}/`,
-  },
-  providers: [],
-  callbacks: {},
-} satisfies NextAuthConfig;
+export type { UserType } from "@/app/(auth)/auth";
+export { auth as default } from "@/app/(auth)/auth";

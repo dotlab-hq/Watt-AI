@@ -6,10 +6,10 @@ import { ChevronLeftIcon, ChevronRightIcon, DiffIcon } from "lucide-react";
 import type { Dispatch, SetStateAction } from "react";
 import { useState } from "react";
 import { useSWRConfig } from "swr";
+import { LoaderIcon } from "@/components/chat/icons";
 import { useArtifact } from "@/hooks/use-artifact";
 import type { Document } from "@/lib/db/schema";
 import { cn, getDocumentTimestampByIndex } from "@/lib/utils";
-import { LoaderIcon } from "./icons";
 
 type VersionFooterProps = {
   handleVersionChange: (type: "next" | "prev" | "toggle" | "latest") => void;

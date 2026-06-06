@@ -17,17 +17,17 @@ import { codeArtifact } from "@/artifacts/code/client";
 import { imageArtifact } from "@/artifacts/image/client";
 import { sheetArtifact } from "@/artifacts/sheet/client";
 import { textArtifact } from "@/artifacts/text/client";
+import { ArtifactActions } from "@/components/chat/artifact-actions";
+import { ArtifactCloseButton } from "@/components/chat/artifact-close-button";
+import { LoaderIcon } from "@/components/chat/icons";
+import { Toolbar } from "@/components/chat/toolbar";
+import { VersionFooter } from "@/components/chat/version-footer";
+import type { VisibilityType } from "@/components/chat/visibility-selector";
+import { useSidebar } from "@/components/ui/sidebar";
 import { useArtifact } from "@/hooks/use-artifact";
 import type { Document, Vote } from "@/lib/db/schema";
 import type { Attachment, ChatMessage } from "@/lib/types";
 import { fetcher } from "@/lib/utils";
-import { useSidebar } from "../ui/sidebar";
-import { ArtifactActions } from "./artifact-actions";
-import { ArtifactCloseButton } from "./artifact-close-button";
-import { LoaderIcon } from "./icons";
-import { Toolbar } from "./toolbar";
-import { VersionFooter } from "./version-footer";
-import type { VisibilityType } from "./visibility-selector";
 
 export const artifactDefinitions = [
   textArtifact,

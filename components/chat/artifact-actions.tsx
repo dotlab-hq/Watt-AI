@@ -1,9 +1,16 @@
 import { memo, useState } from "react";
 import { toast } from "sonner";
+import {
+  artifactDefinitions,
+  type UIArtifact,
+} from "@/components/chat/artifact";
+import type { ArtifactActionContext } from "@/components/chat/create-artifact";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
-import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
-import { artifactDefinitions, type UIArtifact } from "./artifact";
-import type { ArtifactActionContext } from "./create-artifact";
 
 type ArtifactActionsProps = {
   artifact: UIArtifact;

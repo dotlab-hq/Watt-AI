@@ -37,6 +37,23 @@ import {
   ModelSelectorTrigger,
 } from "@/components/ai-elements/model-selector";
 import {
+  PromptInput,
+  PromptInputFooter,
+  PromptInputSubmit,
+  PromptInputTextarea,
+  PromptInputTools,
+} from "@/components/ai-elements/prompt-input";
+import { PaperclipIcon, StopIcon } from "@/components/chat/icons";
+import { PreviewAttachment } from "@/components/chat/preview-attachment";
+import {
+  type SlashCommand,
+  SlashCommandMenu,
+  slashCommands,
+} from "@/components/chat/slash-commands";
+import { SuggestedActions } from "@/components/chat/suggested-actions";
+import type { VisibilityType } from "@/components/chat/visibility-selector";
+import { Button } from "@/components/ui/button";
+import {
   type ChatModel,
   chatModels,
   DEFAULT_CHAT_MODEL,
@@ -44,23 +61,6 @@ import {
 } from "@/lib/ai/models";
 import type { Attachment, ChatMessage } from "@/lib/types";
 import { cn } from "@/lib/utils";
-import {
-  PromptInput,
-  PromptInputFooter,
-  PromptInputSubmit,
-  PromptInputTextarea,
-  PromptInputTools,
-} from "../ai-elements/prompt-input";
-import { Button } from "../ui/button";
-import { PaperclipIcon, StopIcon } from "./icons";
-import { PreviewAttachment } from "./preview-attachment";
-import {
-  type SlashCommand,
-  SlashCommandMenu,
-  slashCommands,
-} from "./slash-commands";
-import { SuggestedActions } from "./suggested-actions";
-import type { VisibilityType } from "./visibility-selector";
 
 function setCookie(name: string, value: string) {
   const maxAge = 60 * 60 * 24 * 365;

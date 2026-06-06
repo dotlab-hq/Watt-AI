@@ -1,6 +1,12 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { Artifact } from "@/components/chat/artifact";
+import { ChatHeader } from "@/components/chat/chat-header";
+import { DataStreamHandler } from "@/components/chat/data-stream-handler";
+import { submitEditedMessage } from "@/components/chat/message-editor";
+import { Messages } from "@/components/chat/messages";
+import { MultimodalInput } from "@/components/chat/multimodal-input";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -19,12 +25,6 @@ import {
 } from "@/hooks/use-artifact";
 import type { Attachment, ChatMessage } from "@/lib/types";
 import { cn } from "@/lib/utils";
-import { Artifact } from "./artifact";
-import { ChatHeader } from "./chat-header";
-import { DataStreamHandler } from "./data-stream-handler";
-import { submitEditedMessage } from "./message-editor";
-import { Messages } from "./messages";
-import { MultimodalInput } from "./multimodal-input";
 
 export function ChatShell() {
   const {

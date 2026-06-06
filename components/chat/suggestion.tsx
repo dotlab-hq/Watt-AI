@@ -1,10 +1,9 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-
+import { CrossIcon, SparklesIcon } from "@/components/chat/icons";
+import { Button } from "@/components/ui/button";
 import type { UISuggestion } from "@/lib/editor/suggestions";
-import { Button } from "../ui/button";
-import { CrossIcon, SparklesIcon } from "./icons";
 
 export const SuggestionDialog = ({
   suggestion,

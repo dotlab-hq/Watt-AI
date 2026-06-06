@@ -1,8 +1,8 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { SparklesIcon } from "@/components/chat/icons";
 import { suggestions } from "@/lib/constants";
-import { SparklesIcon } from "./icons";
 
 export function Preview() {
   const router = useRouter();

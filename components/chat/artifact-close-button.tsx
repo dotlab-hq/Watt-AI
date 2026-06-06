@@ -1,6 +1,6 @@
 import { memo } from "react";
+import { CrossIcon } from "@/components/chat/icons";
 import { initialArtifactData, useArtifact } from "@/hooks/use-artifact";
-import { CrossIcon } from "./icons";
 
 function PureArtifactCloseButton() {
   const { setArtifact } = useArtifact();
@@ -19,6 +19,7 @@ function PureArtifactCloseButton() {
             : { ...initialArtifactData, status: "idle" }
         );
       }}
+      title="Close"
       type="button"
     >
       <CrossIcon size={16} />

@@ -16,8 +16,6 @@ import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 import type { ArtifactKind } from "@/components/chat/artifact";
 import type { VisibilityType } from "@/components/chat/visibility-selector";
-import { ChatbotError } from "../errors";
-import { generateUUID } from "../utils";
 import {
   type Chat,
   chat,
@@ -30,8 +28,10 @@ import {
   type User,
   user,
   vote,
-} from "./schema";
-import { generateHashedPassword } from "./utils";
+} from "@/lib/db/schema";
+import { generateHashedPassword } from "@/lib/db/utils";
+import { ChatbotError } from "@/lib/errors";
+import { generateUUID } from "@/lib/utils";
 
 const client = postgres(process.env.POSTGRES_URL ?? "");
 const db = drizzle(client);

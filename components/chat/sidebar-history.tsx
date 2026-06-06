@@ -3,10 +3,12 @@
 import { isToday, isYesterday, subMonths, subWeeks } from "date-fns";
 import { motion } from "framer-motion";
 import { usePathname, useRouter } from "next/navigation";
-import type { User } from "next-auth";
 import { useState } from "react";
 import { toast } from "sonner";
 import useSWRInfinite from "swr/infinite";
+import type { User } from "@/app/(auth)/auth";
+import { LoaderIcon } from "@/components/chat/icons";
+import { ChatItem } from "@/components/chat/sidebar-history-item";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -26,8 +28,6 @@ import {
 } from "@/components/ui/sidebar";
 import type { Chat } from "@/lib/db/schema";
 import { fetcher } from "@/lib/utils";
-import { LoaderIcon } from "./icons";
-import { ChatItem } from "./sidebar-history-item";
 
 type GroupedChats = {
   today: Chat[];

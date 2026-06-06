@@ -10,22 +10,22 @@ import {
   useRef,
 } from "react";
 import useSWR from "swr";
-import { useArtifact } from "@/hooks/use-artifact";
-import type { Document } from "@/lib/db/schema";
-import { cn, fetcher } from "@/lib/utils";
-import type { ArtifactKind, UIArtifact } from "./artifact";
-import { CodeEditor } from "./code-editor";
-import { InlineDocumentSkeleton } from "./document-skeleton";
+import type { ArtifactKind, UIArtifact } from "@/components/chat/artifact";
+import { CodeEditor } from "@/components/chat/code-editor";
+import { InlineDocumentSkeleton } from "@/components/chat/document-skeleton";
 import {
   CodeIcon,
   FileIcon,
   FullscreenIcon,
   ImageIcon,
   LoaderIcon,
-} from "./icons";
-import { ImageEditor } from "./image-editor";
-import { SpreadsheetEditor } from "./sheet-editor";
-import { Editor } from "./text-editor";
+} from "@/components/chat/icons";
+import { ImageEditor } from "@/components/chat/image-editor";
+import { SpreadsheetEditor } from "@/components/chat/sheet-editor";
+import { Editor } from "@/components/chat/text-editor";
+import { useArtifact } from "@/hooks/use-artifact";
+import type { Document } from "@/lib/db/schema";
+import { cn, fetcher } from "@/lib/utils";
 
 type DocumentToolOutput = {
   id: string;

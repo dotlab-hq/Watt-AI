@@ -1,7 +1,7 @@
 import Image from "next/image";
+import { CrossSmallIcon } from "@/components/chat/icons";
+import { Spinner } from "@/components/ui/spinner";
 import type { Attachment } from "@/lib/types";
-import { Spinner } from "../ui/spinner";
-import { CrossSmallIcon } from "./icons";
 
 export const PreviewAttachment = ({
   attachment,

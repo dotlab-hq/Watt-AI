@@ -1,25 +1,28 @@
 "use client";
 import type { UseChatHelpers } from "@ai-sdk/react";
-import type { Vote } from "@/lib/db/schema";
-import type { ChatMessage } from "@/lib/types";
-import { cn, sanitizeText } from "@/lib/utils";
-import { MessageContent, MessageResponse } from "../ai-elements/message";
-import { Shimmer } from "../ai-elements/shimmer";
+import {
+  MessageContent,
+  MessageResponse,
+} from "@/components/ai-elements/message";
+import { Shimmer } from "@/components/ai-elements/shimmer";
 import {
   Tool,
   ToolContent,
   ToolHeader,
   ToolInput,
   ToolOutput,
-} from "../ai-elements/tool";
-import { useDataStream } from "./data-stream-provider";
-import { DocumentToolResult } from "./document";
-import { DocumentPreview } from "./document-preview";
-import { SparklesIcon } from "./icons";
-import { MessageActions } from "./message-actions";
-import { MessageReasoning } from "./message-reasoning";
-import { PreviewAttachment } from "./preview-attachment";
-import { Weather } from "./weather";
+} from "@/components/ai-elements/tool";
+import { useDataStream } from "@/components/chat/data-stream-provider";
+import { DocumentToolResult } from "@/components/chat/document";
+import { DocumentPreview } from "@/components/chat/document-preview";
+import { SparklesIcon } from "@/components/chat/icons";
+import { MessageActions } from "@/components/chat/message-actions";
+import { MessageReasoning } from "@/components/chat/message-reasoning";
+import { PreviewAttachment } from "@/components/chat/preview-attachment";
+import { Weather } from "@/components/chat/weather";
+import type { Vote } from "@/lib/db/schema";
+import type { ChatMessage } from "@/lib/types";
+import { cn, sanitizeText } from "@/lib/utils";
 
 const PurePreviewMessage = ({
   addToolApprovalResponse,

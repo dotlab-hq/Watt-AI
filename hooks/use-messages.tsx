@@ -1,7 +1,7 @@
 import type { UseChatHelpers } from "@ai-sdk/react";
 import { useEffect, useState } from "react";
+import { useScrollToBottom } from "@/hooks/use-scroll-to-bottom";
 import type { ChatMessage } from "@/lib/types";
-import { useScrollToBottom } from "./use-scroll-to-bottom";
 
 export function useMessages({
   status,

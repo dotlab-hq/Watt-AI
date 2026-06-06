@@ -3,13 +3,18 @@ import { memo } from "react";
 import { toast } from "sonner";
 import { useSWRConfig } from "swr";
 import { useCopyToClipboard } from "usehooks-ts";
-import type { Vote } from "@/lib/db/schema";
-import type { ChatMessage } from "@/lib/types";
 import {
   MessageAction as Action,
   MessageActions as Actions,
-} from "../ai-elements/message";
-import { CopyIcon, PencilEditIcon, ThumbDownIcon, ThumbUpIcon } from "./icons";
+} from "@/components/ai-elements/message";
+import {
+  CopyIcon,
+  PencilEditIcon,
+  ThumbDownIcon,
+  ThumbUpIcon,
+} from "@/components/chat/icons";
+import type { Vote } from "@/lib/db/schema";
+import type { ChatMessage } from "@/lib/types";
 
 export function PureMessageActions({
   chatId,

@@ -7,8 +7,8 @@ import { renderToString } from "react-dom/server";
 
 import { MessageResponse } from "@/components/ai-elements/message";
 
-import { documentSchema } from "./config";
-import type { UISuggestion } from "./suggestions";
+import { documentSchema } from "@/lib/editor/config";
+import type { UISuggestion } from "@/lib/editor/suggestions";
 
 export const buildDocumentFromContent = (content: string) => {
   const parser = DOMParser.fromSchema(documentSchema);
