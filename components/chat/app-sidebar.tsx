@@ -330,16 +330,25 @@ export function AppSidebar({ user }: { user: User | undefined }) {
                     >
                       <FolderIcon className="size-4" />
                       <span>Projects</span>
-                      <button
+                      <span
+                        role="button"
+                        tabIndex={0}
                         onClick={(e) => {
                           e.stopPropagation();
                           setOpenMobile(false);
                           setCreateProjectOpen(true);
                         }}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" || e.key === " ") {
+                            e.stopPropagation();
+                            setOpenMobile(false);
+                            setCreateProjectOpen(true);
+                          }
+                        }}
                         className="ml-auto mr-1 flex size-5 items-center justify-center rounded text-sidebar-foreground/60 transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground"
                       >
                         <PlusIcon className="size-3.5" />
-                      </button>
+                      </span>
                       <ChevronRightIcon
                         className={`size-3 transition-transform duration-200 ${projectsOpen ? "rotate-90" : ""}`}
                       />
@@ -424,7 +433,7 @@ export function AppSidebar({ user }: { user: User | undefined }) {
                               </div>
 
                               {isExpanded && (
-                                <div className="ml-3 mt-0.5 border-l border-sidebar-border/20 pl-2">
+                                <div className="ml-3 mt-0.5 list-none border-l border-sidebar-border/20 pl-2">
                                   {!projectChats[project.id] ? (
                                     <div className="px-2 py-2 text-[11px] text-sidebar-foreground/20">
                                       Loading...
@@ -443,8 +452,6 @@ export function AppSidebar({ user }: { user: User | undefined }) {
                                           isActive={false}
                                           onDelete={() => {}}
                                           setOpenMobile={setOpenMobile}
-                                          index={idx}
-                                          showIndex
                                           compact
                                         />
                                       )

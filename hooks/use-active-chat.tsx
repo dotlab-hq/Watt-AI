@@ -45,6 +45,7 @@ type ActiveChatContextValue = {
   votes: Vote[] | undefined;
   currentModelId: string;
   setCurrentModelId: (id: string) => void;
+  projectId: string | null;
   showCreditCardAlert: boolean;
   setShowCreditCardAlert: Dispatch<SetStateAction<boolean>>;
 };
@@ -73,15 +74,6 @@ export function ActiveChatProvider({ children }: { children: ReactNode }) {
 
   const chatId = chatIdFromUrl ?? newChatIdRef.current;
 
-  const [projectId, setProjectId] = useState<string | undefined>(undefined);
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const pid = params.get("projectId") ?? undefined;
-    if (pid && !chatIdFromUrl) {
-      setProjectId(pid);
-    }
-  }, [chatIdFromUrl]);
-
   const [currentModelId, setCurrentModelId] = useState(DEFAULT_CHAT_MODEL);
   const currentModelIdRef = useRef(currentModelId);
   useEffect(() => {
@@ -91,13 +83,36 @@ export function ActiveChatProvider({ children }: { children: ReactNode }) {
   const [input, setInput] = useState("");
   const [showCreditCardAlert, setShowCreditCardAlert] = useState(false);
 
-  const { data: chatData, isLoading } = useSWR(
-    isNewChat
-      ? null
-      : `${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/api/messages?chatId=${chatId}`,
-    fetcher,
-    { revalidateOnFocus: false }
-  );
+  const [projectId, setProjectId] = useState<string | null>(() => {
+    if (typeof window !== "undefined") {
+      return new URLSearchParams(window.location.search).get("projectId");
+    }
+    return null;
+  });
+  const projectIdRef = useRef(projectId);
+  useEffect(() => {
+    projectIdRef.current = projectId;
+  }, [projectId]);
+  useEffect(() => {
+    if (isNewChat) {
+      const params = new URLSearchParams(window.location.search);
+      const pid = params.get("projectId");
+      if (pid) setProjectId(pid);
+    }
+  }, [isNewChat]);
+
+  const messagesUrl = isNewChat
+    ? null
+    : `${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/api/messages?chatId=${chatId}${projectIdRef.current ? `&projectId=${encodeURIComponent(projectIdRef.current)}` : ""}`;
+  const { data: chatData, isLoading } = useSWR(messagesUrl, fetcher, {
+    revalidateOnFocus: false,
+  });
+
+  useEffect(() => {
+    if (!isNewChat && chatData?.projectId) {
+      setProjectId(chatData.projectId);
+    }
+  }, [isNewChat, chatData?.projectId]);
 
   const initialMessages: ChatMessage[] = isNewChat
     ? []
@@ -149,14 +164,14 @@ export function ActiveChatProvider({ children }: { children: ReactNode }) {
 
         return {
           body: {
+            ...request.body,
             id: request.id,
             ...(isToolApprovalContinuation
               ? { messages: request.messages }
               : { message: lastMessage }),
             selectedChatModel: currentModelIdRef.current,
             selectedVisibilityType: visibility,
-            ...(projectId ? { projectId } : {}),
-            ...request.body,
+            ...(projectIdRef.current ? { projectId: projectIdRef.current } : {}),
           },
         };
       },
@@ -272,6 +287,7 @@ export function ActiveChatProvider({ children }: { children: ReactNode }) {
       votes,
       currentModelId,
       setCurrentModelId,
+      projectId,
       showCreditCardAlert,
       setShowCreditCardAlert,
     }),
@@ -291,6 +307,7 @@ export function ActiveChatProvider({ children }: { children: ReactNode }) {
       isLoading,
       votes,
       currentModelId,
+      projectId,
       showCreditCardAlert,
     ]
   );

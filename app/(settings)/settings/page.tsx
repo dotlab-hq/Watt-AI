@@ -7,6 +7,7 @@ import {
   GlobeIcon,
   LinkIcon,
   LoaderIcon,
+  MessageSquareIcon,
   PlusIcon,
   ServerIcon,
   TerminalIcon,
@@ -39,6 +40,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { authClient, useSession } from "@/lib/auth-client";
 
@@ -65,6 +67,12 @@ type ProjectFile = {
   mimeType: string | null;
   status: "uploading" | "processing" | "ready" | "failed";
   liveStatus?: "uploading" | "processing" | "ready" | "failed";
+  createdAt: string;
+};
+
+type ProjectChat = {
+  id: string;
+  title: string;
   createdAt: string;
 };
 
@@ -306,6 +314,8 @@ function ProjectsTab() {
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [projectFiles, setProjectFiles] = useState<ProjectFile[]>([]);
   const [loadingFiles, setLoadingFiles] = useState(false);
+  const [projectChats, setProjectChats] = useState<ProjectChat[]>([]);
+  const [loadingChats, setLoadingChats] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<Project | null>(null);
   const [uploading, setUploading] = useState(false);
 
@@ -338,6 +348,23 @@ function ProjectsTab() {
     }
   }, []);
 
+  const loadChats = useCallback(async (projectId: string) => {
+    setLoadingChats(true);
+    try {
+      const response = await fetch(
+        `/api/projects/${projectId}/chats?limit=50`
+      );
+      if (response.ok) {
+        const data = (await response.json()) as { chats: ProjectChat[] };
+        setProjectChats(data.chats);
+      }
+    } catch {
+      // silent
+    } finally {
+      setLoadingChats(false);
+    }
+  }, []);
+
   useEffect(() => {
     loadProjects();
   }, [loadProjects]);
@@ -345,8 +372,9 @@ function ProjectsTab() {
   useEffect(() => {
     if (selectedProject) {
       loadFiles(selectedProject.id);
+      loadChats(selectedProject.id);
     }
-  }, [selectedProject, loadFiles]);
+  }, [selectedProject, loadFiles, loadChats]);
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -457,14 +485,6 @@ function ProjectsTab() {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <LoaderIcon className="size-5 animate-spin text-muted-foreground" />
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -483,7 +503,28 @@ function ProjectsTab() {
         </Button>
       </div>
 
-      {projects.length === 0 ? (
+      {loading ? (
+        <div className="space-y-3">
+          {[1, 2, 3].map((i) => (
+            <div
+              className="rounded-xl border border-border/50 bg-card p-4"
+              key={i}
+            >
+              <div className="flex items-start justify-between">
+                <div className="min-w-0 flex-1 space-y-2">
+                  <Skeleton className="h-4 w-40" />
+                  <Skeleton className="h-3 w-56" />
+                  <div className="flex items-center gap-3">
+                    <Skeleton className="h-3 w-16" />
+                    <Skeleton className="h-3 w-20" />
+                  </div>
+                </div>
+                <Skeleton className="size-7 rounded-lg" />
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : projects.length === 0 ? (
         <div className="rounded-xl border border-border/50 bg-card p-8 text-center">
           <FolderIcon className="mx-auto mb-3 size-8 text-muted-foreground/50" />
           <p className="text-sm text-muted-foreground">
@@ -543,82 +584,146 @@ function ProjectsTab() {
 
       {/* Selected Project Detail */}
       {selectedProject && (
-        <section className="rounded-xl border border-border/50 bg-card p-6">
-          <div className="mb-4 flex items-center justify-between">
-            <div>
-              <h3 className="text-sm font-medium">{selectedProject.name}</h3>
-              {selectedProject.vectorStoreId && (
-                <p className="mt-0.5 flex items-center gap-1 text-xs text-muted-foreground">
-                  <LinkIcon className="size-3" />
-                  Vector Store connected
+        <div className="space-y-6">
+          {/* Project Info */}
+          <section className="rounded-xl border border-border/50 bg-card p-6">
+            <div className="mb-4 flex items-center justify-between">
+              <div>
+                <h3 className="text-sm font-medium">{selectedProject.name}</h3>
+                {selectedProject.description && (
+                  <p className="mt-0.5 text-xs text-muted-foreground">
+                    {selectedProject.description}
+                  </p>
+                )}
+                {selectedProject.vectorStoreId && (
+                  <p className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
+                    <LinkIcon className="size-3" />
+                    Vector Store connected
+                  </p>
+                )}
+              </div>
+            </div>
+
+            {/* Chats */}
+            <div className="mb-5">
+              <h4 className="mb-2 text-xs font-medium text-muted-foreground">
+                Chats
+              </h4>
+              {loadingChats ? (
+                <div className="space-y-2">
+                  {[1, 2, 3].map((i) => (
+                    <Skeleton className="h-10 w-full" key={i} />
+                  ))}
+                </div>
+              ) : projectChats.length === 0 ? (
+                <p className="py-3 text-center text-xs text-muted-foreground">
+                  No chats in this project yet. Start a chat from the sidebar
+                  to link it here.
                 </p>
+              ) : (
+                <div className="space-y-1.5">
+                  {projectChats.map((c) => (
+                    <a
+                      className="flex items-center justify-between rounded-lg bg-muted/30 px-3 py-2 transition-colors hover:bg-muted/50"
+                      href={`/chat/${c.id}`}
+                      key={c.id}
+                    >
+                      <div className="flex items-center gap-2">
+                        <MessageSquareIcon className="size-3.5 text-muted-foreground" />
+                        <span className="truncate text-xs font-medium">
+                          {c.title}
+                        </span>
+                      </div>
+                      <span className="shrink-0 text-[10px] text-muted-foreground">
+                        {new Date(c.createdAt).toLocaleDateString()}
+                      </span>
+                    </a>
+                  ))}
+                </div>
               )}
             </div>
-            <label>
-              <input
-                accept=".txt,.md,.pdf,.csv,.json,.docx"
-                className="hidden"
-                onChange={handleFileUpload}
-                type="file"
-              />
-              <Button asChild disabled={uploading} size="sm" variant="outline">
-                <span>
-                  {uploading ? (
-                    <LoaderIcon className="size-4 animate-spin" />
-                  ) : (
-                    <UploadIcon className="size-4" />
-                  )}
-                  Upload File
-                </span>
-              </Button>
-            </label>
-          </div>
 
-          {loadingFiles ? (
-            <div className="flex items-center justify-center py-6">
-              <LoaderIcon className="size-4 animate-spin text-muted-foreground" />
-            </div>
-          ) : projectFiles.length === 0 ? (
-            <p className="py-4 text-center text-xs text-muted-foreground">
-              No files uploaded yet. Upload documents to populate the vector
-              store.
-            </p>
-          ) : (
-            <div className="space-y-2">
-              {projectFiles.map((file) => (
-                <div
-                  className="flex items-center justify-between rounded-lg bg-muted/30 px-3 py-2"
-                  key={file.id}
-                >
-                  <div className="flex items-center gap-2">
-                    <FileIcon className="size-4 text-muted-foreground" />
-                    <div>
-                      <p className="text-xs font-medium">{file.fileName}</p>
-                      <p className="text-[10px] text-muted-foreground">
-                        {file.fileSize
-                          ? `${(file.fileSize / 1024).toFixed(1)} KB`
-                          : "—"}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <StatusBadge status={file.liveStatus ?? file.status} />
-                    <button
-                      aria-label="Delete file"
-                      className="rounded p-1 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
-                      onClick={() => {
-                        handleDeleteFile(file);
-                      }}
-                      type="button"
-                    >
-                      <XIcon className="size-3" />
-                    </button>
-                  </div>
+            {/* Files */}
+            <div>
+              <div className="mb-2 flex items-center justify-between">
+                <h4 className="text-xs font-medium text-muted-foreground">
+                  Files
+                </h4>
+                <label>
+                  <input
+                    accept=".txt,.md,.pdf,.csv,.json,.docx"
+                    className="hidden"
+                    onChange={handleFileUpload}
+                    type="file"
+                  />
+                  <Button
+                    asChild
+                    disabled={uploading}
+                    size="sm"
+                    variant="outline"
+                  >
+                    <span>
+                      {uploading ? (
+                        <LoaderIcon className="size-4 animate-spin" />
+                      ) : (
+                        <UploadIcon className="size-4" />
+                      )}
+                      Upload File
+                    </span>
+                  </Button>
+                </label>
+              </div>
+              {loadingFiles ? (
+                <div className="space-y-2">
+                  {[1, 2].map((i) => (
+                    <Skeleton className="h-10 w-full" key={i} />
+                  ))}
                 </div>
-              ))}
+              ) : projectFiles.length === 0 ? (
+                <p className="py-3 text-center text-xs text-muted-foreground">
+                  No files uploaded yet. Upload documents to populate the
+                  vector store.
+                </p>
+              ) : (
+                <div className="space-y-1.5">
+                  {projectFiles.map((file) => (
+                    <div
+                      className="flex items-center justify-between rounded-lg bg-muted/30 px-3 py-2"
+                      key={file.id}
+                    >
+                      <div className="flex items-center gap-2">
+                        <FileIcon className="size-4 text-muted-foreground" />
+                        <div>
+                          <p className="text-xs font-medium">
+                            {file.fileName}
+                          </p>
+                          <p className="text-[10px] text-muted-foreground">
+                            {file.fileSize
+                              ? `${(file.fileSize / 1024).toFixed(1)} KB`
+                              : "—"}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <StatusBadge status={file.liveStatus ?? file.status} />
+                        <button
+                          aria-label="Delete file"
+                          className="rounded p-1 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                          onClick={() => {
+                            handleDeleteFile(file);
+                          }}
+                          type="button"
+                        >
+                          <XIcon className="size-3" />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
-          )}
-        </section>
+          </section>
+        </div>
       )}
 
       {/* Create Dialog */}
