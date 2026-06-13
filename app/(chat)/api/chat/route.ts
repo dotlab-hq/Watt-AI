@@ -31,6 +31,12 @@ import { getWeather } from "@/lib/ai/tools/get-weather";
 import { requestSuggestions } from "@/lib/ai/tools/request-suggestions";
 import { updateDocument } from "@/lib/ai/tools/update-document";
 import { verifyContent } from "@/lib/ai/tools/verify";
+import {
+  createSearchProjectFilesTool,
+  createListProjectFilesTool,
+  createGetFileContentTool,
+} from "@/lib/ai/vector-store";
+import { openai as openaiSdk } from "@ai-sdk/openai";
 import { isProductionEnvironment } from "@/lib/constants";
 import {
   createStreamId,
@@ -119,12 +125,17 @@ export async function POST(request: Request) {
     const chat = await getChatById({ id });
     let messagesFromDb: DBMessage[] = [];
     let titlePromise: Promise<string> | null = null;
+    let projectVectorStoreId: string | null = null;
 
     if (chat) {
       if (chat.userId !== session.user.id) {
         return new ChatbotError("forbidden:chat").toResponse();
       }
       messagesFromDb = await getMessagesByChatId({ id });
+      if (chat.projectId) {
+        const project = await getProjectById({ id: chat.projectId });
+        projectVectorStoreId = project?.vectorStoreId ?? null;
+      }
     } else if (message?.role === "user") {
       if (projectId) {
         const project = await getProjectById({ id: projectId });
@@ -134,6 +145,7 @@ export async function POST(request: Request) {
             "You don't have access to this project"
           ).toResponse();
         }
+        projectVectorStoreId = project.vectorStoreId ?? null;
       }
 
       await saveChat({
@@ -216,50 +228,56 @@ export async function POST(request: Request) {
 
     const modelMessages = await convertToModelMessages(uiMessages);
 
+    const hasProject = Boolean(projectVectorStoreId);
+
     const stream = createUIMessageStream({
       originalMessages: isToolApprovalFlow ? uiMessages : undefined,
       execute: async ({ writer: dataStream }) => {
+        const tools: Record<string, any> = {
+          getWeather,
+          createDocument: createDocument({ session, dataStream, modelId: chatModel }),
+          editDocument: editDocument({ dataStream, session }),
+          updateDocument: updateDocument({ session, dataStream, modelId: chatModel }),
+          requestSuggestions: requestSuggestions({ session, dataStream, modelId: chatModel }),
+          verifyContent,
+        };
+
+        const activeTools: string[] = [
+          "getWeather",
+          "createDocument",
+          "editDocument",
+          "updateDocument",
+          "requestSuggestions",
+          "verifyContent",
+          "web_search",
+        ];
+
+        if (projectVectorStoreId) {
+          tools.searchProjectFiles = createSearchProjectFilesTool(projectVectorStoreId);
+          tools.listProjectFiles = createListProjectFilesTool(projectVectorStoreId);
+          tools.getFileContent = createGetFileContentTool(projectVectorStoreId);
+          activeTools.push(
+            "searchProjectFiles",
+            "listProjectFiles",
+            "getFileContent"
+          );
+        }
+
         const result = streamText({
           model: getLanguageModel(chatModel),
-          system: systemPrompt({ requestHints, supportsTools }),
+          system: systemPrompt({ requestHints, supportsTools, hasProject }),
           messages: modelMessages,
           stopWhen: stepCountIs(5),
           experimental_activeTools:
             isReasoningModel && !supportsTools
               ? []
-              : [
-                  "getWeather",
-                  "createDocument",
-                  "editDocument",
-                  "updateDocument",
-                  "requestSuggestions",
-                  "verifyContent",
-                ],
+              : activeTools,
           providerOptions: {
             ...(modelConfig?.reasoningEffort && {
               openai: { reasoningEffort: modelConfig.reasoningEffort },
             }),
           },
-          tools: {
-            getWeather,
-            createDocument: createDocument({
-              session,
-              dataStream,
-              modelId: chatModel,
-            }),
-            editDocument: editDocument({ dataStream, session }),
-            updateDocument: updateDocument({
-              session,
-              dataStream,
-              modelId: chatModel,
-            }),
-            requestSuggestions: requestSuggestions({
-              session,
-              dataStream,
-              modelId: chatModel,
-            }),
-            verifyContent,
-          },
+          tools,
           experimental_telemetry: {
             isEnabled: isProductionEnvironment,
             functionId: "stream-text",

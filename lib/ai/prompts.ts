@@ -65,20 +65,59 @@ About the origin of user's request:
 - country: ${requestHints.country}
 `;
 
+export const projectFilesPrompt = `
+This project contains uploaded files accessible through three tools. Use them to answer questions about the user's project files.
+
+## Available Tools
+
+### \`listProjectFiles\`
+Lists all files in the project with their processing status and IDs.
+- Use FIRST to discover what files exist and get their file IDs.
+- Optionally filter by status: "completed", "in_progress", "failed", "cancelled".
+
+### \`searchProjectFiles\`
+Semantic search across all file content. Returns relevant text chunks with filenames and similarity scores.
+- Use when the user asks a question about the content of their files.
+- Pass a natural language query describing what information you need.
+- Call multiple times with different queries if needed.
+
+### \`getFileContent\`
+Retrieves the full parsed text content of a specific file by its file ID.
+- Use AFTER \`listProjectFiles\` to get a file's ID, then call this to read its entire content.
+- Essential for reading resumes, documents, or any file the user wants fully examined.
+
+## When to use these tools
+- User asks "what's in my files / resume / document" → call \`listProjectFiles\` first, then \`getFileContent\` for the relevant file
+- User asks a specific question about project content → call \`searchProjectFiles\` with a targeted query
+- User wants a summary of all files → call \`listProjectFiles\` then \`getFileContent\` on each
+- For general questions unrelated to project files, you do NOT need to search.
+
+Always base your answers on the tool results. If tools return no results, say so clearly.`;
+
 export const systemPrompt = ({
   requestHints,
   supportsTools,
+  hasProject,
 }: {
   requestHints: RequestHints;
   supportsTools: boolean;
+  hasProject?: boolean;
 }) => {
   const requestPrompt = getRequestPromptFromHints(requestHints);
 
-  if (!supportsTools) {
-    return `${regularPrompt}\n\n${requestPrompt}`;
+  let prompt = regularPrompt;
+
+  if (hasProject) {
+    prompt += `\n\n${projectFilesPrompt}`;
   }
 
-  return `${regularPrompt}\n\n${requestPrompt}\n\n${artifactsPrompt}`;
+  prompt += `\n\n${requestPrompt}`;
+
+  if (supportsTools) {
+    prompt += `\n\n${artifactsPrompt}`;
+  }
+
+  return prompt;
 };
 
 export const codePrompt = `

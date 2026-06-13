@@ -1,4 +1,6 @@
+import { tool } from "ai";
 import OpenAI from "openai";
+import { z } from "zod";
 
 const openai = new OpenAI();
 
@@ -143,4 +145,115 @@ export async function searchVectorStore({
       .map((c) => c.text)
       .join("\n"),
   }));
+}
+
+// ─── AI Tool Factories ──────────────────────────────────────────────────────
+// These return AI SDK tools bound to a specific vector store.
+// The LLM calls them autonomously — the system prompt instructs when to use each.
+
+const fileStatusEnum = z.enum(["in_progress", "completed", "failed", "cancelled"]);
+
+/**
+ * Tool 1: Semantic search across all project files.
+ * The LLM calls this with a natural language query to find relevant chunks.
+ */
+export function createSearchProjectFilesTool(vectorStoreId: string) {
+  return tool({
+    description:
+      "Search the user's project files for relevant information using semantic search. Use this when the user asks about their project, uploaded files, or anything that might be contained in their documents. Pass a natural language query describing what information you need.",
+    inputSchema: z.object({
+      query: z
+        .string()
+        .describe("Natural language search query describing the information you need"),
+      maxResults: z
+        .number()
+        .int()
+        .min(1)
+        .max(50)
+        .default(10)
+        .describe("Maximum number of results to return (default 10)"),
+    }),
+    execute: async ({ query, maxResults }) => {
+      const results = await searchVectorStore({ vectorStoreId, query, maxResults });
+      if (results.length === 0) {
+        return "No relevant content found in project files for this query.";
+      }
+      return results
+        .map(
+          (r, i) =>
+            `[Result ${i + 1} | File: ${r.filename} | Score: ${r.score.toFixed(2)}]\n${r.content}`
+        )
+        .join("\n\n---\n\n");
+    },
+  });
+}
+
+/**
+ * Tool 2: List all files in the vector store with their processing status.
+ * The LLM calls this to discover what files are available before searching or reading.
+ */
+export function createListProjectFilesTool(vectorStoreId: string) {
+  return tool({
+    description:
+      "List all files in the user's project vector store, including their processing status. Use this to discover what files are available, check if files are ready, or find a file's ID before retrieving its content.",
+    inputSchema: z.object({
+      statusFilter: fileStatusEnum
+        .optional()
+        .describe(
+          "Optional: filter by file status (in_progress, completed, failed, cancelled)"
+        ),
+    }),
+    execute: async ({ statusFilter }) => {
+      const response = await openai.vectorStores.files.list(vectorStoreId, {
+        filter: statusFilter,
+        limit: 100,
+      });
+
+      if (response.data.length === 0) {
+        return statusFilter
+          ? `No files found with status "${statusFilter}".`
+          : "This project has no files.";
+      }
+
+      const lines = response.data.map(
+        (f) =>
+          `- ID: ${f.id} | Status: ${f.status} | Size: ${f.usage_bytes} bytes | Created: ${new Date(f.created_at * 1000).toISOString()}${f.last_error ? ` | Error: ${f.last_error.message}` : ""}`
+      );
+
+      return `Found ${response.data.length} file(s):\n${lines.join("\n")}`;
+    },
+  });
+}
+
+/**
+ * Tool 3: Retrieve the parsed text content of a specific file.
+ * The LLM calls this after listing files to read the full content of a file by ID.
+ */
+export function createGetFileContentTool(vectorStoreId: string) {
+  return tool({
+    description:
+      "Retrieve the full parsed text content of a specific file from the vector store. Use this after listProjectFiles to find a file's ID, then call this tool to read its entire content. Useful for reading a resume, document, or any uploaded file in full.",
+    inputSchema: z.object({
+      fileId: z
+        .string()
+        .describe(
+          "The vector store file ID to retrieve (get this from listProjectFiles)"
+        ),
+    }),
+    execute: async ({ fileId }) => {
+      const pages: string[] = [];
+      for await (const chunk of openai.vectorStores.files.content(fileId, {
+        vector_store_id: vectorStoreId,
+      })) {
+        if (chunk.text) pages.push(chunk.text);
+      }
+
+      if (pages.length === 0) {
+        return "No text content could be retrieved from this file. The file may still be processing or may not contain extractable text.";
+      }
+
+      const fullText = pages.join("\n");
+      return fullText;
+    },
+  });
 }
