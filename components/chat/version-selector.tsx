@@ -2,13 +2,7 @@
 
 import { formatDistance } from "date-fns";
 import { Check, ChevronDown } from "lucide-react";
-import {
-  type Dispatch,
-  type SetStateAction,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import { useEffect, useRef, useState } from "react";
 import type { Document } from "@/lib/db/schema";
 
 export function VersionSelector({
@@ -18,7 +12,7 @@ export function VersionSelector({
 }: {
   documents: Document[];
   currentVersionIndex: number;
-  onVersionChange: Dispatch<SetStateAction<number>>;
+  onVersionChange: (index: number) => void;
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
