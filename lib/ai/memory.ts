@@ -13,6 +13,8 @@
  * falling back to text search otherwise.
  */
 
+import { openai } from "@ai-sdk/openai";
+import { embed } from "ai";
 import { type Collection, type Db, type Document, MongoClient } from "mongodb";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
@@ -167,6 +169,18 @@ export async function saveMemory(
   const coll = getCollection(params.tier);
   const result = await coll.insertOne(entry);
   entry._id = result.insertedId;
+
+  // Generate embedding asynchronously (fire-and-forget)
+  generateEmbeddingForMemory(entry)
+    .then(async (embedding) => {
+      if (embedding && entry._id) {
+        await coll.updateOne({ _id: entry._id }, { $set: { embedding } });
+      }
+    })
+    .catch(() => {
+      /* embedding generation is best-effort */
+    });
+
   return entry;
 }
 
@@ -251,11 +265,30 @@ export async function searchMemories(params: {
       // $text index may not exist, fall through to regex
     }
 
-    // Regex fallback
+    // Regex fallback — tokenize query into words and match any (OR)
+    const words = query
+      .split(/\s+/)
+      .filter((w) => w.length > 2)
+      .map(escapeRegex);
+
+    if (words.length === 0) {
+      // Query is too short for meaningful regex, return recent
+      const recent = await coll
+        .find(matchStage)
+        .sort({ updatedAt: -1 })
+        .limit(maxResults)
+        .toArray();
+      return recent.map((doc) => ({ entry: doc, score: 0.2 }));
+    }
+
+    const wordRegex = words.join("|");
     const regexResults = await coll
       .find({
         ...matchStage,
-        content: { $regex: escapeRegex(query), $options: "i" },
+        $or: [
+          { content: { $regex: wordRegex, $options: "i" } },
+          { label: { $regex: wordRegex, $options: "i" } },
+        ],
       })
       .sort({ updatedAt: -1 })
       .limit(maxResults)
@@ -396,7 +429,79 @@ export async function clearMemories(params: {
 
   return totalDeleted;
 }
+// ─── Embedding Generation ────────────────────────────────────────────────
 
+const EMBEDDING_MODEL = "text-embedding-3-small";
+
+/**
+ * Generate an embedding for a single memory entry.
+ * Uses label + content as the text to embed.
+ */
+async function generateEmbeddingForMemory(
+  entry: MemoryEntry
+): Promise<number[] | null> {
+  if (entry.embedding && entry.embedding.length > 0) {
+    return entry.embedding; // already has one
+  }
+
+  try {
+    const text = [entry.label, entry.content].filter(Boolean).join(" — ");
+    const { embedding } = await embed({
+      model: openai.embedding(EMBEDDING_MODEL),
+      value: text,
+    });
+    return embedding;
+  } catch {
+    // Embedding generation failed — will fall back to text search
+    return null;
+  }
+}
+
+// ─── Backfill ──────────────────────────────────────────────────────────────
+
+/**
+ * Backfill embeddings for all memory entries that are missing them.
+ * Call this once at startup or as a cron job.
+ */
+export async function backfillEmbeddings(params?: {
+  batchSize?: number;
+  tier?: MemoryTier;
+}): Promise<{ processed: number; skipped: number; failed: number }> {
+  await ensureIndexes();
+
+  const batchSize = params?.batchSize ?? 50;
+  const tiers: MemoryTier[] = params?.tier
+    ? [params.tier]
+    : ["session", "semantic", "procedural", "episodic", "scratchpad"];
+
+  let processed = 0;
+  let skipped = 0;
+  let failed = 0;
+
+  for (const t of tiers) {
+    const coll = getCollection(t);
+    const cursor = coll
+      .find({ embedding: { $exists: false } })
+      .limit(batchSize);
+
+    const docs = await cursor.toArray();
+    for (const doc of docs) {
+      try {
+        const embedding = await generateEmbeddingForMemory(doc);
+        if (embedding && doc._id) {
+          await coll.updateOne({ _id: doc._id }, { $set: { embedding } });
+          processed++;
+        } else {
+          skipped++;
+        }
+      } catch {
+        failed++;
+      }
+    }
+  }
+
+  return { processed, skipped, failed };
+}
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
 function escapeRegex(str: string): string {
