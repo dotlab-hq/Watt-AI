@@ -19,7 +19,7 @@ function apply() {
   const f = localStorage.getItem(KEYS.font) || "sora";
   const fs = localStorage.getItem(KEYS.fontSize) || "m";
   const sp = localStorage.getItem(KEYS.spacing) || "compact";
-  const av = localStorage.getItem(KEYS.showAvatars) !== "0";
+  const av = localStorage.getItem(KEYS.showAvatars) === "1";
 
   root.classList.remove("theme-modern", "theme-company", "font-sora", "font-onest", "font-reddit-mono");
   root.classList.add(`theme-${t}`, `font-${f}`);

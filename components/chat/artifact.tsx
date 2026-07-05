@@ -16,6 +16,7 @@ import { useWindowSize } from "usehooks-ts";
 import { codeArtifact } from "@/artifacts/code/client";
 import { imageArtifact } from "@/artifacts/image/client";
 import { sheetArtifact } from "@/artifacts/sheet/client";
+import { svgArtifact } from "@/artifacts/svg/client";
 import { textArtifact } from "@/artifacts/text/client";
 import { ArtifactActions } from "@/components/chat/artifact-actions";
 import { ArtifactCloseButton } from "@/components/chat/artifact-close-button";
@@ -34,6 +35,7 @@ export const artifactDefinitions = [
   codeArtifact,
   imageArtifact,
   sheetArtifact,
+  svgArtifact,
 ];
 export type ArtifactKind = (typeof artifactDefinitions)[number]["kind"];
 

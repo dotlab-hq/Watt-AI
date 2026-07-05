@@ -64,6 +64,7 @@ import {
 import { LiveWaveform } from "@/components/ui/live-waveform";
 import type { Attachment, ChatMessage } from "@/lib/types";
 import { cn } from "@/lib/utils";
+import { protectText } from "@/lib/rampart";
 
 function setCookie(name: string, value: string) {
   const maxAge = 60 * 60 * 24 * 365;
@@ -88,6 +89,7 @@ function PureMultimodalInput({
   onModelChange,
   editingMessage,
   onCancelEdit,
+  setPendingPiiMap,
   isLoading,
 }: {
   chatId: string;
@@ -108,6 +110,7 @@ function PureMultimodalInput({
   onModelChange?: (modelId: string) => void;
   editingMessage?: ChatMessage | null;
   onCancelEdit?: () => void;
+  setPendingPiiMap: (map: Record<string, string>) => void;
   isLoading?: boolean;
 }) {
   const router = useRouter();
@@ -221,12 +224,17 @@ function PureMultimodalInput({
   const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
 
-  const submitForm = useCallback(() => {
+  const submitForm = useCallback(async () => {
     window.history.pushState(
       {},
       "",
       `${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/chat/${chatId}`
     );
+
+    const result = await protectText(input);
+    const text = result?.text ?? input;
+    const piiMap = result?.piiMap ?? {};
+    setPendingPiiMap(piiMap);
 
     sendMessage({
       role: "user",
@@ -239,7 +247,7 @@ function PureMultimodalInput({
         })),
         {
           type: "text",
-          text: input,
+          text,
         },
       ],
     });
@@ -258,6 +266,7 @@ function PureMultimodalInput({
     sendMessage,
     setAttachments,
     setLocalStorageInput,
+    setPendingPiiMap,
     width,
     chatId,
   ]);

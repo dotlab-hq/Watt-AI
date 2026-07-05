@@ -8,6 +8,7 @@ import { DataStreamProvider } from "@/components/chat/data-stream-provider";
 import { ChatShell } from "@/components/chat/shell";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { ActiveChatProvider } from "@/hooks/use-active-chat";
+import { getUserById } from "@/lib/db/queries";
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   return (
@@ -29,6 +30,12 @@ async function SidebarShell({ children }: { children: React.ReactNode }) {
   const [session, cookieStore] = await Promise.all([auth(), cookies()]);
   const isCollapsed = cookieStore.get("sidebar_state")?.value !== "true";
 
+  let emailVerified = false;
+  if (session?.user?.id) {
+    const user = await getUserById({ userId: session.user.id });
+    emailVerified = user?.emailVerified ?? false;
+  }
+
   return (
     <SidebarProvider defaultOpen={!isCollapsed}>
       <AppSidebar user={session?.user} />
@@ -42,7 +49,7 @@ async function SidebarShell({ children }: { children: React.ReactNode }) {
           }}
         />
         <Suspense fallback={<div className="flex h-dvh" />}>
-          <ActiveChatProvider>
+          <ActiveChatProvider emailVerified={emailVerified}>
             <ChatShell />
           </ActiveChatProvider>
         </Suspense>

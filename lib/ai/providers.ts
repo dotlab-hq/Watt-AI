@@ -1,3 +1,4 @@
+import { anthropic } from "@ai-sdk/anthropic";
 import { openai } from "@ai-sdk/openai";
 import { customProvider } from "ai";
 import { isTestEnvironment } from "@/lib/constants";
@@ -19,6 +20,9 @@ export function getLanguageModel(modelId: string) {
     return myProvider.languageModel(modelId);
   }
 
+  if (modelId.startsWith("claude-")) {
+    return anthropic(modelId);
+  }
   return openai.chat(modelId);
 }
 

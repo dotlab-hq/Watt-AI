@@ -29,6 +29,27 @@
       "when": 1751712000000,
       "tag": "0003_add_speech_key",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1783223473223,
+      "tag": "0004_slippery_kingpin",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1783228673196,
+      "tag": "0005_first_the_fallen",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1783230610102,
+      "tag": "0006_tiny_morlocks",
+      "breakpoints": true
     }
   ]
 }

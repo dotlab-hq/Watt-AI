@@ -1,3 +1,7 @@
+import { eq } from "drizzle-orm";
+import { db } from "@/lib/db";
+import { encryptPiiMap, importPublicKey } from "@/lib/crypto";
+import { getUserKeyPair } from "@/lib/db/queries/keypair";
 import { geolocation, ipAddress } from "@vercel/functions";
 import {
   convertToModelMessages,
@@ -24,11 +28,20 @@ import {
   DEFAULT_CHAT_MODEL,
   getCapabilities,
 } from "@/lib/ai/models";
-import { type RequestHints, systemPrompt } from "@/lib/ai/prompts";
+import {
+  type RequestHints,
+  type PersonalizationHints,
+  systemPrompt,
+} from "@/lib/ai/prompts";
 import { getLanguageModel } from "@/lib/ai/providers";
 import { createDocument } from "@/lib/ai/tools/create-document";
 import { editDocument } from "@/lib/ai/tools/edit-document";
+import { calculator } from "@/lib/ai/tools/calculator";
+import { currencyConverter } from "@/lib/ai/tools/currency-converter";
 import { getWeather } from "@/lib/ai/tools/get-weather";
+import { localTime } from "@/lib/ai/tools/local-time";
+import { timer } from "@/lib/ai/tools/timer";
+import { unitConverter } from "@/lib/ai/tools/unit-converter";
 import {
   webSearch,
   webSearchExtract,
@@ -58,7 +71,7 @@ import {
   updateChatTitleById,
   updateMessage,
 } from "@/lib/db/queries";
-import type { DBMessage } from "@/lib/db/schema";
+import { personalization, type DBMessage } from "@/lib/db/schema";
 import {
   connectToMcpServer,
   disconnectAll,
@@ -220,6 +233,19 @@ export async function POST(request: Request) {
     };
 
     if (message?.role === "user") {
+      let encryptedPiiMap: string | null = null;
+      if (message.piiMap && Object.keys(message.piiMap).length > 0) {
+        try {
+          const kp = await getUserKeyPair({ userId: session.user.id });
+          if (kp) {
+            const publicKey = await importPublicKey(kp.publicKey);
+            encryptedPiiMap = await encryptPiiMap(message.piiMap, publicKey);
+          }
+        } catch {
+          // non-critical: message still saves, just without encrypted piiMap
+        }
+      }
+
       await saveMessages({
         messages: [
           {
@@ -230,6 +256,7 @@ export async function POST(request: Request) {
             attachments: [],
             createdAt: new Date(),
             speechKey: "",
+            piiMap: encryptedPiiMap,
           },
         ],
       });
@@ -245,11 +272,69 @@ export async function POST(request: Request) {
 
     const hasProject = Boolean(projectVectorStoreId);
 
+    // Fetch personalization for system prompt
+    let personalizationData: PersonalizationHints | undefined;
+    try {
+      const pRow = await db
+        .select()
+        .from(personalization)
+        .where(eq(personalization.userId, session.user.id))
+        .limit(1);
+      if (pRow.length > 0) {
+        const p = pRow[0];
+        personalizationData = {
+          baseStyle: p.baseStyle,
+          warm: p.warm,
+          enthusiastic: p.enthusiastic,
+          headersAndLists: p.headersAndLists,
+          emoji: p.emoji,
+          customInstructions: p.customInstructions ?? undefined,
+          nickname: p.nickname ?? undefined,
+          occupation: p.occupation ?? undefined,
+          moreAboutYou: p.moreAboutYou ?? undefined,
+        };
+      }
+    } catch {
+      // non-critical, continue without personalization
+    }
+
+    // Fetch project instructions if in a project
+    if (hasProject && chat?.projectId) {
+      try {
+        const project = await getProjectById({ id: chat.projectId });
+        if (project?.description) {
+          personalizationData = {
+            ...personalizationData,
+            projectInstructions: project.description,
+          };
+        }
+      } catch {
+        // non-critical
+      }
+    } else if (hasProject && projectId) {
+      try {
+        const project = await getProjectById({ id: projectId });
+        if (project?.description) {
+          personalizationData = {
+            ...personalizationData,
+            projectInstructions: project.description,
+          };
+        }
+      } catch {
+        // non-critical
+      }
+    }
+
     const stream = createUIMessageStream({
       originalMessages: isToolApprovalFlow ? uiMessages : undefined,
       execute: async ({ writer: dataStream }) => {
         const tools: Record<string, any> = {
           getWeather,
+          calculator,
+          timer,
+          currencyConverter,
+          unitConverter,
+          localTime,
           createDocument: createDocument({ session, dataStream, modelId: chatModel }),
           editDocument: editDocument({ dataStream, session }),
           updateDocument: updateDocument({ session, dataStream, modelId: chatModel }),
@@ -262,6 +347,11 @@ export async function POST(request: Request) {
 
         const activeTools: string[] = [
           "getWeather",
+          "calculator",
+          "timer",
+          "currencyConverter",
+          "unitConverter",
+          "localTime",
           "createDocument",
           "editDocument",
           "updateDocument",
@@ -300,9 +390,9 @@ export async function POST(request: Request) {
 
         const result = streamText({
           model: getLanguageModel(chatModel),
-          instructions: systemPrompt({ requestHints, supportsTools, hasProject }),
+          instructions: systemPrompt({ requestHints, supportsTools, hasProject, personalization: personalizationData }),
           messages: modelMessages,
-          reasoning: modelConfig?.reasoningEffort ?? "medium",
+          reasoning: modelConfig?.reasoningEffort,
           stopWhen: isStepCount(5),
           activeTools: isReasoningModel && !supportsTools ? [] : activeTools,
           tools,
@@ -348,6 +438,7 @@ export async function POST(request: Request) {
                     attachments: [],
                     chatId: id,
                     speechKey: "",
+                    piiMap: null,
                   },
                 ],
               });
@@ -363,6 +454,7 @@ export async function POST(request: Request) {
               attachments: [],
               chatId: id,
               speechKey: "",
+              piiMap: null,
             })),
           });
         }

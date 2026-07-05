@@ -9,6 +9,7 @@ import {
   type Dispatch,
   type ReactNode,
   type SetStateAction,
+  useCallback,
   useContext,
   useEffect,
   useMemo,
@@ -26,6 +27,7 @@ import { DEFAULT_CHAT_MODEL } from "@/lib/ai/models";
 import type { Vote } from "@/lib/db/schema";
 import { ChatbotError } from "@/lib/errors";
 import type { ChatMessage } from "@/lib/types";
+import { getGuard, initGuard } from "@/lib/rampart";
 import { fetcher, fetchWithErrorHandlers, generateUUID } from "@/lib/utils";
 
 type ActiveChatContextValue = {
@@ -39,6 +41,8 @@ type ActiveChatContextValue = {
   addToolApprovalResponse: UseChatHelpers<ChatMessage>["addToolApprovalResponse"];
   input: string;
   setInput: Dispatch<SetStateAction<string>>;
+  setPendingPiiMap: (map: Record<string, string>) => void;
+  emailVerified: boolean;
   visibilityType: VisibilityType;
   isReadonly: boolean;
   isLoading: boolean;
@@ -57,7 +61,13 @@ function extractChatId(pathname: string): string | null {
   return match ? match[1] : null;
 }
 
-export function ActiveChatProvider({ children }: { children: ReactNode }) {
+export function ActiveChatProvider({
+  children,
+  emailVerified = false,
+}: {
+  children: ReactNode;
+  emailVerified?: boolean;
+}) {
   const pathname = usePathname();
   const { setDataStream } = useDataStream();
   const { mutate } = useSWRConfig();
@@ -83,6 +93,8 @@ export function ActiveChatProvider({ children }: { children: ReactNode }) {
   const [input, setInput] = useState("");
   const [showCreditCardAlert, setShowCreditCardAlert] = useState(false);
 
+  const pendingPiiMapRef = useRef<Record<string, string> | null>(null);
+
   const [projectId, setProjectId] = useState<string | null>(() => {
     if (typeof window !== "undefined") {
       return new URLSearchParams(window.location.search).get("projectId");
@@ -93,6 +105,10 @@ export function ActiveChatProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     projectIdRef.current = projectId;
   }, [projectId]);
+  // Eager-load rampart guard so it's ready before the first message
+  useEffect(() => {
+    initGuard(!emailVerified);
+  }, [emailVerified]);
   useEffect(() => {
     if (isNewChat) {
       const params = new URLSearchParams(window.location.search);
@@ -168,7 +184,11 @@ export function ActiveChatProvider({ children }: { children: ReactNode }) {
             id: request.id,
             ...(isToolApprovalContinuation
               ? { messages: request.messages }
-              : { message: lastMessage }),
+              : {
+                  message: pendingPiiMapRef.current
+                    ? { ...lastMessage, piiMap: pendingPiiMapRef.current }
+                    : lastMessage,
+                }),
             selectedChatModel: currentModelIdRef.current,
             selectedVisibilityType: visibility,
             ...(projectIdRef.current ? { projectId: projectIdRef.current } : {}),
@@ -245,9 +265,20 @@ export function ActiveChatProvider({ children }: { children: ReactNode }) {
         "",
         `${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/chat/${chatId}`
       );
-      sendMessage({
-        role: "user" as const,
-        parts: [{ type: "text", text: query }],
+      getGuard().then((guard) => {
+        if (!guard) {
+          sendMessage({
+            role: "user" as const,
+            parts: [{ type: "text", text: query }],
+          });
+          return;
+        }
+        guard.protect(query).then((safe) => {
+          sendMessage({
+            role: "user" as const,
+            parts: [{ type: "text", text: safe.text }],
+          });
+        });
       });
     }
   }, [sendMessage, chatId]);
@@ -287,6 +318,13 @@ export function ActiveChatProvider({ children }: { children: ReactNode }) {
     { revalidateOnFocus: false }
   );
 
+  const setPendingPiiMap = useCallback(
+    (map: Record<string, string>) => {
+      pendingPiiMapRef.current = map;
+    },
+    []
+  );
+
   const value = useMemo<ActiveChatContextValue>(
     () => ({
       chatId,
@@ -299,6 +337,8 @@ export function ActiveChatProvider({ children }: { children: ReactNode }) {
       addToolApprovalResponse,
       input,
       setInput,
+      setPendingPiiMap,
+      emailVerified,
       visibilityType: visibility,
       isReadonly,
       isLoading: !isNewChat && isLoading,
@@ -319,6 +359,7 @@ export function ActiveChatProvider({ children }: { children: ReactNode }) {
       regenerate,
       addToolApprovalResponse,
       input,
+      setPendingPiiMap,
       visibility,
       isReadonly,
       isNewChat,

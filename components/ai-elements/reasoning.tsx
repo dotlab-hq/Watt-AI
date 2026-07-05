@@ -25,7 +25,7 @@ import {
 } from "react";
 import { Streamdown } from "streamdown";
 
-import { Shimmer } from "@/components/ai-elements/shimmer";
+import { ShimmeringText } from "@/components/ui/shimmering-text";
 
 interface ReasoningContextValue {
   isStreaming: boolean;
@@ -156,7 +156,7 @@ export type ReasoningTriggerProps = ComponentProps<
 
 const defaultGetThinkingMessage = (isStreaming: boolean, duration?: number) => {
   if (isStreaming || duration === 0) {
-    return <Shimmer className="font-medium" duration={1}>Thinking...</Shimmer>;
+    return <ShimmeringText text="Thinking..." className="font-medium" duration={2} />;
   }
   if (duration === undefined) {
     return <p>Thought for a few seconds</p>;

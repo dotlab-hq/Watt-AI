@@ -1,0 +1,1 @@
+ALTER TABLE "chatbot"."Personalization" ALTER COLUMN "show_avatars" SET DEFAULT false;

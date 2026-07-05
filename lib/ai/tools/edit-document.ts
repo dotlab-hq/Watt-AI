@@ -77,6 +77,12 @@ export const editDocument = ({ session, dataStream }: EditDocumentProps) =>
           data: updated,
           transient: true,
         });
+      } else if (document.kind === "svg") {
+        dataStream.write({
+          type: "data-svgDelta",
+          data: updated,
+          transient: true,
+        });
       } else {
         dataStream.write({
           type: "data-textDelta",

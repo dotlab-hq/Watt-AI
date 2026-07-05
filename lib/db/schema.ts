@@ -51,6 +51,7 @@ export const message = chatbot.table("Message_v2", {
   attachments: json("attachments").notNull(),
   createdAt: timestamp("createdAt").notNull(),
   speechKey: text("speechKey").default("").notNull(),
+  piiMap: text("pii_map"),
 });
 
 export type DBMessage = InferSelectModel<typeof message>;
@@ -80,7 +81,7 @@ export const document = chatbot.table(
     createdAt: timestamp("createdAt").notNull(),
     title: text("title").notNull(),
     content: text("content"),
-    kind: varchar("text", { enum: ["text", "code", "image", "sheet"] })
+    kind: varchar("text", { enum: ["text", "code", "image", "sheet", "svg"] })
       .notNull()
       .default("text"),
     userId: text("userId")
@@ -284,7 +285,29 @@ export const personalization = chatbot.table("Personalization", {
   spacing: varchar("spacing", { enum: ["compact", "cozy", "roomy"] })
     .notNull()
     .default("cozy"),
-  showAvatars: boolean("show_avatars").notNull().default(true),
+  showAvatars: boolean("show_avatars").notNull().default(false),
+  // AI Personalization
+  baseStyle: varchar("base_style", {
+    enum: ["default", "professional", "friendly", "candid", "quirky", "efficient", "cynical"],
+  })
+    .notNull()
+    .default("default"),
+  warm: varchar("warm", { enum: ["default", "more", "less"] })
+    .notNull()
+    .default("default"),
+  enthusiastic: varchar("enthusiastic", { enum: ["default", "more", "less"] })
+    .notNull()
+    .default("default"),
+  headersAndLists: varchar("headers_and_lists", { enum: ["default", "more", "less"] })
+    .notNull()
+    .default("default"),
+  emoji: varchar("emoji", { enum: ["default", "more", "less"] })
+    .notNull()
+    .default("default"),
+  customInstructions: text("custom_instructions").default(""),
+  nickname: text("nickname").default(""),
+  occupation: text("occupation").default(""),
+  moreAboutYou: text("more_about_you").default(""),
   createdAt: timestamp("createdAt").notNull().defaultNow(),
   updatedAt: timestamp("updatedAt")
     .notNull()
@@ -310,17 +333,6 @@ export const personalizationRelations = relations(personalization, ({ one }) => 
     fields: [personalization.userId],
     references: [user.id],
   }),
-}));
-
-export const userRelations = relations(user, ({ many, one }) => ({
-  sessions: many(session),
-  accounts: many(account),
-  members: many(member),
-  invitations: many(invitation),
-  ssoProviders: many(ssoProvider),
-  projects: many(project),
-  mcpServers: many(mcpServer),
-  personalization: one(personalization),
 }));
 
 export const sessionRelations = relations(session, ({ one }) => ({
@@ -489,4 +501,43 @@ export const chatRelations = relations(chat, ({ one }) => ({
     fields: [chat.projectId],
     references: [project.id],
   }),
+}));
+
+// ─── User Key Pair (PII encryption) ────────────────────────────────────────
+
+export const userKeyPair = chatbot.table("UserKeyPair", {
+  id: uuid("id").primaryKey().notNull().defaultRandom(),
+  userId: text("userId")
+    .notNull()
+    .unique()
+    .references(() => user.id, { onDelete: "cascade" }),
+  publicKey: text("public_key").notNull(),
+  encryptedPrivateKey: text("encrypted_private_key").notNull(),
+  keyVersion: integer("key_version").notNull().default(1),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at")
+    .notNull()
+    .defaultNow()
+    .$onUpdate(() => new Date()),
+});
+
+export type UserKeyPair = InferSelectModel<typeof userKeyPair>;
+
+export const userKeyPairRelations = relations(userKeyPair, ({ one }) => ({
+  user: one(user, {
+    fields: [userKeyPair.userId],
+    references: [user.id],
+  }),
+}));
+
+export const userRelations = relations(user, ({ many, one }) => ({
+  sessions: many(session),
+  accounts: many(account),
+  members: many(member),
+  invitations: many(invitation),
+  ssoProviders: many(ssoProvider),
+  projects: many(project),
+  mcpServers: many(mcpServer),
+  personalization: one(personalization),
+  keyPair: one(userKeyPair),
 }));

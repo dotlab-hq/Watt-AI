@@ -4,7 +4,7 @@ import {
   MessageContent,
   MessageResponse,
 } from "@/components/ai-elements/message";
-import { Shimmer } from "@/components/ai-elements/shimmer";
+import { ShimmeringText } from "@/components/ui/shimmering-text";
 import {
   Tool,
   ToolContent,
@@ -21,7 +21,15 @@ import { MessageReasoning } from "@/components/chat/message-reasoning";
 import { PreviewAttachment } from "@/components/chat/preview-attachment";
 import { SearchSourcesBar, extractSearchResults } from "@/components/chat/search-sources";
 import { getDomain, useSearchSourcesPanel } from "@/components/chat/search-sources-context";
+import { Calculator } from "@/components/chat/calculator";
+import { CurrencyConverter } from "@/components/chat/currency-converter";
+import { LocalTime } from "@/components/chat/local-time";
+import { Timer } from "@/components/chat/timer";
+import { UnitConverter } from "@/components/chat/unit-converter";
 import { Weather } from "@/components/chat/weather";
+import { getGuardSync } from "@/lib/rampart";
+import { getPiiMap } from "@/lib/pii-store";
+import { PLACEHOLDER_PATTERN } from "@nationaldesignstudio/rampart";
 import type { Vote } from "@/lib/db/schema";
 import type { ChatMessage } from "@/lib/types";
 import { cn, sanitizeText } from "@/lib/utils";
@@ -136,12 +144,23 @@ const PurePreviewMessage = ({
           data-testid="message-content"
           key={key}
         >
-          <MessageResponse>{sanitizeText(part.text)}</MessageResponse>
+          <MessageResponse>{(() => {
+            const cleaned = sanitizeText(part.text);
+            // First try the guard's session table (newly sent messages)
+            const g = getGuardSync();
+            const text = g ? g.reveal(cleaned) : cleaned;
+            // If placeholders remain, resolve from the PII store (loaded messages)
+            const pii = getPiiMap();
+            if (Object.keys(pii).length > 0) {
+              return text.replace(PLACEHOLDER_PATTERN, (match) => pii[match] ?? match);
+            }
+            return text;
+          })()}</MessageResponse>
         </MessageContent>
       );
     }
 
-    if (type === "tool-getWeather") {
+    if (type === "tool-getWeather" || type === "tool-calculator" || type === "tool-timer" || type === "tool-currencyConverter" || type === "tool-unitConverter" || type === "tool-localTime") {
       const { toolCallId, state } = part;
       const approvalId = (part as { approval?: { id: string } }).approval?.id;
       const isDenied =
@@ -150,23 +169,31 @@ const PurePreviewMessage = ({
           (part as { approval?: { approved?: boolean } }).approval?.approved ===
             false);
       const widthClass = "w-[min(100%,450px)]";
+      const toolName = type.replace("tool-", "");
 
       if (state === "output-available") {
-        return (
-          <div className={widthClass} key={toolCallId}>
-            <Weather weatherAtLocation={part.output} />
-          </div>
-        );
+        const output = part.output;
+        let content;
+        switch (toolName) {
+          case "getWeather": content = <Weather weatherAtLocation={output} />; break;
+          case "calculator": content = <Calculator result={output} />; break;
+          case "timer": content = <Timer data={output} />; break;
+          case "currencyConverter": content = <CurrencyConverter result={output} />; break;
+          case "unitConverter": content = <UnitConverter result={output} />; break;
+          case "localTime": content = <LocalTime result={output} />; break;
+          default: content = null;
+        }
+        return <div className={widthClass} key={toolCallId}>{content}</div>;
       }
 
       if (isDenied) {
         return (
           <div className={widthClass} key={toolCallId}>
             <Tool className="w-full" defaultOpen={true}>
-              <ToolHeader state="output-denied" type="tool-getWeather" />
+              <ToolHeader state="output-denied" type={type} />
               <ToolContent>
                 <div className="px-4 py-3 text-muted-foreground text-sm">
-                  Weather lookup was denied.
+                  {toolName} was denied.
                 </div>
               </ToolContent>
             </Tool>
@@ -178,7 +205,7 @@ const PurePreviewMessage = ({
         return (
           <div className={widthClass} key={toolCallId}>
             <Tool className="w-full" defaultOpen={true}>
-              <ToolHeader state={state} type="tool-getWeather" />
+              <ToolHeader state={state} type={type} />
               <ToolContent>
                 <ToolInput input={part.input} />
               </ToolContent>
@@ -190,7 +217,7 @@ const PurePreviewMessage = ({
       return (
         <div className={widthClass} key={toolCallId}>
           <Tool className="w-full" defaultOpen={true}>
-            <ToolHeader state={state} type="tool-getWeather" />
+            <ToolHeader state={state} type={type} />
             <ToolContent>
               {(state === "input-available" ||
                 state === "approval-requested") && (
@@ -204,7 +231,7 @@ const PurePreviewMessage = ({
                       addToolApprovalResponse({
                         id: approvalId,
                         approved: false,
-                        reason: "User denied weather lookup",
+                        reason: `User denied ${toolName}`,
                       });
                     }}
                     type="button"
@@ -330,9 +357,7 @@ const PurePreviewMessage = ({
 
   const content = isThinking ? (
     <div className="flex h-[calc(13px*1.65)] items-center text-sm leading-[1.65]">
-      <Shimmer className="font-medium" duration={1}>
-        Thinking...
-      </Shimmer>
+      <ShimmeringText text="Thinking..." className="font-medium" duration={2} />
     </div>
   ) : (
     <>
@@ -366,7 +391,7 @@ const PurePreviewMessage = ({
       >
         {isAssistant && (
           <div data-personalize-avatar className="flex h-[calc(13px*1.65)] shrink-0 items-center">
-            <div className="flex size-7 items-center justify-center rounded-lg bg-muted/60 text-muted-foreground ring-1 ring-border/50">
+            <div className="flex size-7 items-center justify-center rounded-full bg-muted/60 text-muted-foreground ring-1 ring-border/50">
               <SparklesIcon size={13} />
             </div>
           </div>
@@ -392,15 +417,13 @@ export const ThinkingMessage = () => {
     >
       <div className="flex items-start gap-3">
         <div data-personalize-avatar className="flex h-[calc(13px*1.65)] shrink-0 items-center">
-          <div className="flex size-7 items-center justify-center rounded-lg bg-muted/60 text-muted-foreground ring-1 ring-border/50">
+          <div className="flex size-7 items-center justify-center rounded-full bg-muted/60 text-muted-foreground ring-1 ring-border/50">
             <SparklesIcon size={13} />
           </div>
         </div>
 
         <div className="flex h-[calc(13px*1.65)] items-center text-sm leading-[1.65]">
-          <Shimmer className="font-medium" duration={1}>
-            Thinking...
-          </Shimmer>
+          <ShimmeringText text="Thinking..." className="font-medium" duration={2} />
         </div>
       </div>
     </div>

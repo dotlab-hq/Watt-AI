@@ -9,7 +9,9 @@ import { getTitleModel } from "@/lib/ai/providers";
 import {
   deleteMessagesByChatIdAfterTimestamp,
   getChatById,
+  getMessagesByChatId,
   getMessageById,
+  updateChatTitleById,
   updateChatVisibilityById,
 } from "@/lib/db/queries";
 import { getTextFromMessage } from "@/lib/utils";
@@ -33,6 +35,30 @@ export async function generateTitleFromUserMessage({
     .replace(/^[#*"\s]+/, "")
     .replace(/["]+$/, "")
     .trim();
+}
+
+export async function regenerateChatTitle({ chatId }: { chatId: string }) {
+  const session = await auth();
+  if (!session?.user?.id) {
+    throw new Error("Unauthorized");
+  }
+
+  const chat = await getChatById({ id: chatId });
+  if (!chat || chat.userId !== session.user.id) {
+    throw new Error("Unauthorized");
+  }
+
+  const messages = await getMessagesByChatId({ id: chatId });
+  const firstUserMessage = messages.find((m) => m.role === "user");
+  if (!firstUserMessage) {
+    throw new Error("No user messages found");
+  }
+
+  const title = await generateTitleFromUserMessage({
+    message: { role: "user", parts: firstUserMessage.parts } as UIMessage,
+  });
+  await updateChatTitleById({ chatId, title });
+  return title;
 }
 
 export async function deleteTrailingMessages({ id }: { id: string }) {

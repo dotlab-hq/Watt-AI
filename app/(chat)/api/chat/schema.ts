@@ -18,6 +18,7 @@ const userMessageSchema = z.object({
   id: z.string().uuid(),
   role: z.enum(["user"]),
   parts: z.array(partSchema),
+  piiMap: z.record(z.string()).optional(),
 });
 
 const toolApprovalMessageSchema = z.object({

@@ -63,15 +63,12 @@ function applyToDOM(s: Settings) {
   const root = document.documentElement;
   const wrapper = document.getElementById("personalize-root");
 
-  // Theme accent (on html — doesn't affect layout)
   root.classList.remove("theme-modern", "theme-company");
   root.classList.add(`theme-${s.theme}`);
 
-  // Font (on html — doesn't affect layout)
   root.classList.remove("font-sora", "font-onest", "font-reddit-mono");
   root.classList.add(`font-${s.font}`);
 
-  // Font size, spacing, avatars — on wrapper so dialogs stay unaffected
   if (wrapper) {
     wrapper.classList.remove("text-size-s", "text-size-m", "text-size-l", "text-size-xl");
     wrapper.classList.add(`text-size-${s.fontSize}`);
@@ -152,23 +149,21 @@ function Opt({
   );
 }
 
-// ─── PersonalizationTab ─────────────────────────────────────────────────────
+// ─── GeneralTab ─────────────────────────────────────────────────────────────
 
-export function PersonalizationTab() {
+export function GeneralTab() {
   const { theme: mode, setTheme: setMode } = useTheme();
   const [settings, setSettings] = useState<Settings>(DEFAULTS);
   const [loaded, setLoaded] = useState(false);
   const [resetting, setResetting] = useState(false);
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Load from DB on mount, fall back to localStorage
   useEffect(() => {
     let cancelled = false;
     (async () => {
       const dbSettings = await fetchSettings();
       if (cancelled) return;
 
-      // Merge: if DB has defaults, check if localStorage has non-default values
       const local = readLocal();
       const hasLocalOverride = Object.keys(DEFAULTS).some(
         (k) => local[k as keyof Settings] !== DEFAULTS[k as keyof Settings],
@@ -180,13 +175,12 @@ export function PersonalizationTab() {
       setSettings(merged);
       applyToDOM(merged);
       writeLocal(merged);
-      setMode("light"); // reset to light so the mode toggle is accurate
+      setMode("light");
       setLoaded(true);
     })();
     return () => { cancelled = true; };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Debounced save to DB
   const scheduleSave = useCallback((next: Settings) => {
     if (saveTimer.current) clearTimeout(saveTimer.current);
     saveTimer.current = setTimeout(() => {
@@ -194,7 +188,6 @@ export function PersonalizationTab() {
     }, 500);
   }, []);
 
-  // Update a single setting: apply locally + persist
   const update = useCallback(
     <K extends keyof Settings>(key: K, value: Settings[K]) => {
       setSettings((prev) => {
@@ -208,7 +201,6 @@ export function PersonalizationTab() {
     [scheduleSave],
   );
 
-  // Reset all
   const handleReset = useCallback(async () => {
     setResetting(true);
     try {
@@ -286,7 +278,6 @@ export function PersonalizationTab() {
           Display
         </h3>
 
-        {/* Mode */}
         <div className="flex items-center justify-between">
           <span className="text-xs font-medium text-muted-foreground">Mode</span>
           <div className="flex items-center rounded-lg border border-border/50 bg-muted/30 p-0.5 w-fit">
@@ -315,7 +306,6 @@ export function PersonalizationTab() {
           </div>
         </div>
 
-        {/* Font size */}
         <div className="flex items-center justify-between">
           <span className="text-xs font-medium text-muted-foreground">Font size</span>
           <div className="flex items-center gap-1">
@@ -331,7 +321,6 @@ export function PersonalizationTab() {
           </div>
         </div>
 
-        {/* Spacing */}
         <div className="flex items-center justify-between">
           <span className="text-xs font-medium text-muted-foreground">Spacing</span>
           <div className="flex items-center gap-1">
@@ -347,7 +336,6 @@ export function PersonalizationTab() {
           </div>
         </div>
 
-        {/* Show avatars */}
         <div className="flex items-center justify-between">
           <span className="text-xs font-medium text-muted-foreground">Avatars</span>
           <button
@@ -366,7 +354,6 @@ export function PersonalizationTab() {
         </div>
       </section>
 
-      {/* ── Reset All ── */}
       <Button
         className="w-full justify-center gap-2 text-muted-foreground hover:text-foreground"
         disabled={resetting}

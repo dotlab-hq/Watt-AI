@@ -10,13 +10,14 @@ import {
   LogOutIcon,
   MenuIcon,
   MonitorSmartphoneIcon,
-  PaletteIcon,
   PlusIcon,
   Server,
+  SettingsIcon,
   TerminalIcon,
   TrashIcon,
   UploadIcon,
   User,
+  UserRoundPenIcon,
   XIcon,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -66,11 +67,12 @@ import {
 } from "@/components/ui/sidebar";
 import { Textarea } from "@/components/ui/textarea";
 import { authClient, useSession } from "@/lib/auth-client";
-import { PersonalizeTab } from "@/components/chat/personalize-tab";
+import { GeneralTab } from "@/components/chat/general-tab";
+import { PersonalizationTab } from "@/components/chat/personalize-tab";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
-type TabId = "account" | "projects" | "mcp" | "personalize";
+type TabId = "account" | "projects" | "mcp" | "general" | "personalize";
 
 type Project = {
   id: string;
@@ -111,7 +113,8 @@ const navItems: { id: TabId; label: string; icon: typeof User | null }[] = [
   { id: "account", label: "Account", icon: User },
   { id: "projects", label: "Projects", icon: FolderIcon },
   { id: "mcp", label: "MCP Servers", icon: Server },
-  { id: "personalize", label: "Personalize", icon: PaletteIcon },
+  { id: "general", label: "General", icon: SettingsIcon },
+  { id: "personalize", label: "Personalization", icon: UserRoundPenIcon },
 ];
 
 interface SettingsSheetProps {
@@ -247,7 +250,8 @@ function InnerSettings({ onClose, initialTab }: { onClose: () => void; initialTa
           {activeTab === "account" && <AccountTab />}
           {activeTab === "projects" && <ProjectsTab />}
           {activeTab === "mcp" && <McpTab />}
-          {activeTab === "personalize" && <PersonalizeTab />}
+          {activeTab === "general" && <GeneralTab />}
+          {activeTab === "personalize" && <PersonalizationTab />}
         </div>
       </main>
     </>
@@ -907,12 +911,12 @@ function ProjectsTab() {
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium" htmlFor="project-desc">
-                Description
+                Instructions
               </label>
               <Textarea
                 id="project-desc"
                 onChange={(e) => setNewDescription(e.target.value)}
-                placeholder="What is this project about?"
+                placeholder="Custom instructions for this project's AI context..."
                 rows={3}
                 value={newDescription}
               />

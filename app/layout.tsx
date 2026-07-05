@@ -8,8 +8,8 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://chat.vercel.ai"),
-  title: "Next.js Chatbot Template",
-  description: "Next.js chatbot template using the AI SDK.",
+  title: "Watt AI",
+  description: "Watt AI — a powerful AI coding assistant and chat companion.",
 };
 
 export const viewport = {
@@ -72,7 +72,7 @@ const PERSONALIZE_SCRIPT = `(function(){
     var f=localStorage.getItem('personalize-font')||'sora';
     var fs=localStorage.getItem('personalize-font-size')||'m';
     var sp=localStorage.getItem('personalize-spacing')||'compact';
-    var av=localStorage.getItem('personalize-avatars')!=='0';
+    var av=localStorage.getItem('personalize-avatars')==='1';
     var h=document.documentElement;
     h.classList.add('theme-'+t,'font-'+f);
     var w=document.getElementById('personalize-root');
@@ -102,6 +102,24 @@ export default function RootLayout({
           // biome-ignore lint/security/noDangerouslySetInnerHtml: "Required"
           dangerouslySetInnerHTML={{
             __html: PERSONALIZE_SCRIPT,
+          }}
+        />
+        <script
+          // biome-ignore lint/security/noDangerouslySetInnerHtml: "Required"
+          dangerouslySetInnerHTML={{
+            __html: `document.addEventListener('DOMContentLoaded',function(){
+              try{
+                var fs=localStorage.getItem('personalize-font-size')||'m';
+                var sp=localStorage.getItem('personalize-spacing')||'compact';
+                var av=localStorage.getItem('personalize-avatars');
+                var w=document.getElementById('personalize-root');
+                if(w){
+                  w.classList.add('text-size-'+fs,'spacing-'+sp);
+                  if(av==='0')w.classList.add('hide-avatars');
+                  else if(av===null)w.classList.add('hide-avatars');
+                }
+              }catch(e){}
+            });`,
           }}
         />
       </head>

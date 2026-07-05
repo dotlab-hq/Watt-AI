@@ -2,6 +2,7 @@ import type { UIMessageStreamWriter } from "ai";
 import type { Session } from "@/app/(auth)/auth";
 import { codeDocumentHandler } from "@/artifacts/code/server";
 import { sheetDocumentHandler } from "@/artifacts/sheet/server";
+import { svgDocumentHandler } from "@/artifacts/svg/server";
 import { textDocumentHandler } from "@/artifacts/text/server";
 import type { ArtifactKind } from "@/components/chat/artifact";
 import { saveDocument } from "@/lib/db/queries";
@@ -94,6 +95,7 @@ export const documentHandlersByArtifactKind: DocumentHandler[] = [
   textDocumentHandler,
   codeDocumentHandler,
   sheetDocumentHandler,
+  svgDocumentHandler,
 ];
 
-export const artifactKinds = ["text", "code", "sheet"] as const;
+export const artifactKinds = ["text", "code", "sheet", "svg"] as const;

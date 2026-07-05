@@ -1,6 +1,7 @@
-import { PinIcon } from "lucide-react";
+import { PinIcon, RefreshCwIcon } from "lucide-react";
 import Link from "next/link";
-import { memo } from "react";
+import { memo, useCallback, useState } from "react";
+import { regenerateChatTitle } from "@/app/(chat)/actions";
 import {
   CheckCircleFillIcon,
   GlobeIcon,
@@ -26,6 +27,8 @@ import {
 } from "@/components/ui/sidebar";
 import { useChatVisibility } from "@/hooks/use-chat-visibility";
 import type { Chat } from "@/lib/db/schema";
+import { unstable_serialize, useSWRConfig } from "swr";
+import { getChatHistoryPaginationKey } from "@/components/chat/sidebar-history";
 
 const PureChatItem = ({
   chat,
@@ -50,6 +53,20 @@ const PureChatItem = ({
     chatId: chat.id,
     initialVisibilityType: chat.visibility,
   });
+
+  const { mutate } = useSWRConfig();
+  const [regenerating, setRegenerating] = useState(false);
+
+  const handleRegenerateTitle = useCallback(async () => {
+    setRegenerating(true);
+    try {
+      const newTitle = await regenerateChatTitle({ chatId: chat.id });
+      mutate(unstable_serialize(getChatHistoryPaginationKey));
+      chat.title = newTitle;
+    } finally {
+      setRegenerating(false);
+    }
+  }, [chat, mutate]);
 
   return (
     <SidebarMenuItem>
@@ -128,6 +145,14 @@ const PureChatItem = ({
               </DropdownMenuSubContent>
             </DropdownMenuPortal>
           </DropdownMenuSub>
+
+          <DropdownMenuItem
+            className="cursor-pointer"
+            onSelect={() => handleRegenerateTitle()}
+          >
+            <RefreshCwIcon className={regenerating ? "size-3 animate-spin" : "size-3"} />
+            <span>Regenerate title</span>
+          </DropdownMenuItem>
 
           <DropdownMenuItem
             onSelect={() => onDelete(chat.id)}
