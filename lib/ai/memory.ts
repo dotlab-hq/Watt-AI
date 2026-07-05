@@ -30,6 +30,8 @@ export interface MemoryEntry {
   userId: string;
   /** The chat/conversation this memory belongs to (for session/scratchpad) */
   chatId: string;
+  /** Optional project scope */
+  projectId?: string;
   /** Memory tier */
   tier: MemoryTier;
   /** The actual content stored */
@@ -109,6 +111,9 @@ export async function ensureIndexes(): Promise<void> {
     // Tier-specific index for listing
     await coll.createIndex({ userId: 1, tier: 1, updatedAt: -1 });
 
+    // Project-scoped index for user memories within a project
+    await coll.createIndex({ userId: 1, projectId: 1, tier: 1, updatedAt: -1 });
+
     // TTL index for scratchpad: auto-delete after 24 hours
     if (tier === "scratchpad") {
       await coll.createIndex(
@@ -140,6 +145,7 @@ export async function saveMemory(
     "userId" | "chatId" | "tier" | "content" | "label" | "metadata"
   > & {
     embedding?: number[];
+    projectId?: string;
   }
 ): Promise<MemoryEntry> {
   await ensureIndexes();
@@ -148,6 +154,7 @@ export async function saveMemory(
   const entry: MemoryEntry = {
     userId: params.userId,
     chatId: params.chatId,
+    projectId: params.projectId,
     tier: params.tier,
     content: params.content,
     label: params.label,
@@ -174,10 +181,11 @@ export async function searchMemories(params: {
   query?: string;
   embedding?: number[];
   maxResults?: number;
+  projectId?: string;
 }): Promise<MemorySearchResult[]> {
   await ensureIndexes();
 
-  const { userId, chatId, tier, query, embedding, maxResults = 10 } = params;
+  const { userId, chatId, tier, query, embedding, maxResults = 10, projectId } = params;
   const coll = getCollection(tier);
 
   // For session and scratchpad, scope to the current chat
@@ -187,6 +195,11 @@ export async function searchMemories(params: {
   const matchStage: Document = isUserScoped
     ? { userId, tier }
     : { userId, chatId, tier };
+
+  // If projectId is provided and tier is user-scoped, also filter by projectId
+  if (isUserScoped && projectId) {
+    matchStage.projectId = projectId;
+  }
 
   // If we have embeddings, use vector search via $vectorSearch (Atlas)
   // For now, fall back to text search which works without Atlas vector index
@@ -277,18 +290,28 @@ export async function listMemories(params: {
   chatId?: string;
   tier?: MemoryTier;
   limit?: number;
+  projectId?: string;
 }): Promise<MemoryEntry[]> {
   await ensureIndexes();
 
-  const { userId, chatId, tier, limit = 50 } = params;
+  const { userId, chatId, tier, limit = 50, projectId } = params;
   const coll = getCollection(tier || "semantic");
 
+  // listMemories: only use userId for user-scoped tiers (semantic, procedural, episodic)
+  // Chat-scoped tiers (session, scratchpad) need chatId filtering
+  const isUserScoped = ["semantic", "procedural", "episodic"].includes(
+    tier || "semantic"
+  );
+
   const filter: Document = { userId };
-  if (chatId) {
+  if (!isUserScoped && chatId) {
     filter.chatId = chatId;
   }
   if (tier) {
     filter.tier = tier;
+  }
+  if (isUserScoped && projectId) {
+    filter.projectId = projectId;
   }
 
   return coll.find(filter).sort({ updatedAt: -1 }).limit(limit).toArray();
@@ -356,10 +379,11 @@ export async function clearMemories(params: {
   userId: string;
   chatId?: string;
   tier?: MemoryTier;
+  projectId?: string;
 }): Promise<number> {
   await ensureIndexes();
 
-  const { userId, chatId, tier } = params;
+  const { userId, chatId, tier, projectId } = params;
 
   const tiers: MemoryTier[] = tier
     ? [tier]
@@ -368,9 +392,15 @@ export async function clearMemories(params: {
   let totalDeleted = 0;
   for (const t of tiers) {
     const coll = getCollection(t);
+
+    // User-scoped tiers are cross-chat — only scope by userId
+    const isUserScoped = ["semantic", "procedural", "episodic"].includes(t);
     const filter: Document = { userId };
-    if (chatId) {
+    if (!isUserScoped && chatId) {
       filter.chatId = chatId;
+    }
+    if (isUserScoped && projectId) {
+      filter.projectId = projectId;
     }
 
     const result = await coll.deleteMany(filter);

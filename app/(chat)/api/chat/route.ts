@@ -415,9 +415,11 @@ export async function POST(request: Request) {
 
         // Load MongoDB memory tools when configured
         if (process.env.MONGODB_URI) {
+          const effectiveProjectId = chat?.projectId || projectId || undefined;
           const memoryTools = createMemoryTools({
             userId: session.user.id,
             chatId: id,
+            projectId: effectiveProjectId,
           });
           Object.assign(tools, memoryTools);
           activeTools.push(

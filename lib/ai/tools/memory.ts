@@ -32,8 +32,8 @@ import {
  * @param userId - The authenticated user's ID
  * @param chatId - The current chat/conversation ID
  */
-export function createMemoryTools(params: { userId: string; chatId: string }) {
-  const { userId, chatId } = params;
+export function createMemoryTools(params: { userId: string; chatId: string; projectId?: string }) {
+  const { userId, chatId, projectId } = params;
 
   return {
     /**
@@ -64,6 +64,7 @@ export function createMemoryTools(params: { userId: string; chatId: string }) {
           const entry = await saveMemory({
             userId,
             chatId,
+            projectId,
             tier: tier as MemoryTier,
             content,
             label,
@@ -121,6 +122,7 @@ export function createMemoryTools(params: { userId: string; chatId: string }) {
               tier: tier as MemoryTier,
               query,
               maxResults,
+              projectId,
             });
             return formatSearchResults(results, tier);
           }
@@ -141,6 +143,7 @@ export function createMemoryTools(params: { userId: string; chatId: string }) {
                 tier: t,
                 query,
                 maxResults: 3,
+                projectId,
               });
               return results.map((r) => ({ ...r, tier: t }));
             })
@@ -193,6 +196,7 @@ export function createMemoryTools(params: { userId: string; chatId: string }) {
             chatId,
             tier: tier as MemoryTier | undefined,
             limit,
+            projectId,
           });
 
           if (memories.length === 0) {
@@ -270,6 +274,7 @@ export function createMemoryTools(params: { userId: string; chatId: string }) {
             userId,
             chatId,
             tier: tier as MemoryTier | undefined,
+            projectId,
           });
           return {
             success: true,
