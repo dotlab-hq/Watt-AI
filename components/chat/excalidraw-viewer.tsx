@@ -8,7 +8,7 @@ const Excalidraw = dynamic(
   async () => (await import("@excalidraw/excalidraw")).Excalidraw,
   {
     ssr: false,
-  },
+  }
 );
 
 type ExcalidrawViewerProps = {
@@ -18,7 +18,7 @@ type ExcalidrawViewerProps = {
 
 const CANVAS_HEIGHT = "calc(100vh - 160px)";
 
-function serializeScene(elements: any[], appState: any, files: any) {
+function serializeScene(elements: readonly any[], appState: any, files: any) {
   return JSON.stringify({
     type: "excalidraw",
     version: 2,
@@ -55,19 +55,22 @@ export function ExcalidrawViewer({ content, onChange }: ExcalidrawViewerProps) {
   }, [content]);
 
   const handleChange = useCallback(
-    (elements: any[], appState: any, files: any) => {
+    (elements: readonly any[], appState: any, files: any) => {
       if (!onChange) return;
       const serialized = serializeScene(elements, appState, files);
       // Avoid triggering save if content hasn't actually changed
       if (serialized === contentRef.current) return;
       onChange(serialized);
     },
-    [onChange],
+    [onChange]
   );
 
   if (!initialData) {
     return (
-      <div className="flex items-center justify-center" style={{ height: CANVAS_HEIGHT }}>
+      <div
+        className="flex items-center justify-center"
+        style={{ height: CANVAS_HEIGHT }}
+      >
         <div className="animate-pulse text-sm text-muted-foreground">
           Loading Excalidraw...
         </div>
@@ -78,8 +81,8 @@ export function ExcalidrawViewer({ content, onChange }: ExcalidrawViewerProps) {
   return (
     <div style={{ height: CANVAS_HEIGHT, width: "100%", position: "relative" }}>
       <Excalidraw
-        initialData={initialData}
         autoFocus={true}
+        initialData={initialData}
         onChange={handleChange}
         UIOptions={{
           canvasActions: {
