@@ -1,8 +1,8 @@
 export const DEFAULT_CHAT_MODEL = "claude-sonnet-4-20250514";
 
 export const titleModel = {
-  id: "gpt-4.1-nano",
-  name: "GPT 4.1 Nano",
+  id: "auto-edge",
+  name: "Auto Edge",
   provider: "openai",
   description: "Fast model for title generation",
 };
@@ -23,56 +23,35 @@ export type ChatModel = {
 
 export const chatModels: ChatModel[] = [
   {
-    id: "claude-sonnet-4-20250514",
-    name: "Claude Sonnet 4",
-    provider: "anthropic",
-    description: "Fast with reasoning and tool use",
-    reasoningEffort: "medium",
-  },
-  {
-    id: "claude-opus-4-20250514",
-    name: "Claude Opus 4",
-    provider: "anthropic",
-    description: "Most capable with deep reasoning",
-    reasoningEffort: "medium",
-  },
-  {
-    id: "claude-haiku-4-5-20251001",
-    name: "Claude Haiku 4.5",
-    provider: "anthropic",
-    description: "Fastest Claude model",
-    reasoningEffort: "medium",
-  },
-  {
-    id: "gpt-4.1",
-    name: "GPT 4.1",
+    id: "auto-edge",
+    name: "Auto Edge",
     provider: "openai",
     description: "Flagship model with tool use and vision",
   },
-  {
-    id: "gpt-4.1-mini",
-    name: "GPT 4.1 Mini",
-    provider: "openai",
-    description: "Fast and efficient with tool use",
-  },
-  {
-    id: "gpt-4.1-nano",
-    name: "GPT 4.1 Nano",
-    provider: "openai",
-    description: "Compact and fast",
-  },
-  {
-    id: "gpt-4o",
-    name: "GPT 4o",
-    provider: "openai",
-    description: "Multimodal model with tool use",
-  },
-  {
-    id: "gpt-4o-mini",
-    name: "GPT 4o Mini",
-    provider: "openai",
-    description: "Fast multimodal model",
-  },
+  // {
+  //   id: "gpt-4.1-mini",
+  //   name: "GPT 4.1 Mini",
+  //   provider: "openai",
+  //   description: "Fast and efficient with tool use",
+  // },
+  // {
+  //   id: "gpt-4.1-nano",
+  //   name: "GPT 4.1 Nano",
+  //   provider: "openai",
+  //   description: "Compact and fast",
+  // },
+  // {
+  //   id: "gpt-4o",
+  //   name: "GPT 4o",
+  //   provider: "openai",
+  //   description: "Multimodal model with tool use",
+  // },
+  // {
+  //   id: "gpt-4o-mini",
+  //   name: "GPT 4o Mini",
+  //   provider: "openai",
+  //   description: "Fast multimodal model",
+  // },
 ];
 
 export function getCapabilities(): Record<string, ModelCapabilities> {

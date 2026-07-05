@@ -113,6 +113,11 @@ const PurePreviewMessage = ({
     { text: "", isStreaming: false, rendered: false }
   ) ?? { text: "", isStreaming: false, rendered: false };
 
+  // Deduplicate: only show the last createDocument tool call
+  const lastCreateDocIndex = message.parts?.reduce<number>((acc, part, i) => {
+    return part.type === "tool-createDocument" ? i : acc;
+  }, -1) ?? -1;
+
   const parts = message.parts?.map((part, index) => {
     const { type } = part;
     const key = `message-${message.id}-part-${index}`;
@@ -245,6 +250,10 @@ const PurePreviewMessage = ({
     }
 
     if (type === "tool-createDocument") {
+      // Skip duplicate createDocument calls — only render the last one
+      if (index !== lastCreateDocIndex) {
+        return null;
+      }
       const { toolCallId } = part;
 
       if (part.output && "error" in part.output) {

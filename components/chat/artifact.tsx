@@ -14,17 +14,18 @@ import {
 import useSWR, { useSWRConfig } from "swr";
 import { useWindowSize } from "usehooks-ts";
 import { codeArtifact } from "@/artifacts/code/client";
+import { diagramArtifact } from "@/artifacts/diagram/client";
+import { htmlArtifact } from "@/artifacts/html/client";
 import { imageArtifact } from "@/artifacts/image/client";
 import { sheetArtifact } from "@/artifacts/sheet/client";
-import { htmlArtifact } from "@/artifacts/html/client";
 import { svgArtifact } from "@/artifacts/svg/client";
 import { textArtifact } from "@/artifacts/text/client";
-import { diagramArtifact } from "@/artifacts/diagram/client";
 import { ArtifactActions } from "@/components/chat/artifact-actions";
 import { ArtifactCloseButton } from "@/components/chat/artifact-close-button";
 import { LoaderIcon } from "@/components/chat/icons";
 import { Toolbar } from "@/components/chat/toolbar";
 import { VersionFooter } from "@/components/chat/version-footer";
+import { VersionSelector } from "@/components/chat/version-selector";
 import type { VisibilityType } from "@/components/chat/visibility-selector";
 import { useSidebar } from "@/components/ui/sidebar";
 import { useArtifact } from "@/hooks/use-artifact";
@@ -342,9 +343,13 @@ function PureArtifact({
                   <div className="h-3 w-24 animate-pulse rounded bg-muted-foreground/10" />
                 )}
                 {documents && documents.length > 1 && (
-                  <div className="rounded-md bg-muted px-1.5 py-0.5 text-[10px] font-medium tabular-nums text-muted-foreground">
-                    v{currentVersionIndex + 1}/{documents.length}
-                  </div>
+                  <VersionSelector
+                    currentVersionIndex={currentVersionIndex}
+                    documents={documents}
+                    onVersionChange={(index: number) => {
+                      setCurrentVersionIndex(index);
+                    }}
+                  />
                 )}
               </div>
             </div>

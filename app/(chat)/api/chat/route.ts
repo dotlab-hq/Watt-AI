@@ -1,5 +1,3 @@
-import { eq } from "drizzle-orm";
-import { db } from "@/lib/db";
 import { geolocation, ipAddress } from "@vercel/functions";
 import {
   convertToModelMessages,
@@ -11,6 +9,7 @@ import {
   toUIMessageStream,
 } from "ai";
 import { checkBotId } from "botid/server";
+import { eq } from "drizzle-orm";
 import { after } from "next/server";
 import { createResumableStreamContext } from "resumable-stream";
 import { auth, type UserType } from "@/app/(auth)/auth";
@@ -19,7 +18,6 @@ import {
   type PostRequestBody,
   postRequestBodySchema,
 } from "@/app/(chat)/api/chat/schema";
-import { entitlementsByUserType } from "@/lib/ai/entitlements";
 import {
   allowedModelIds,
   chatModels,
@@ -27,41 +25,42 @@ import {
   getCapabilities,
 } from "@/lib/ai/models";
 import {
-  type RequestHints,
   type PersonalizationHints,
+  type RequestHints,
   systemPrompt,
 } from "@/lib/ai/prompts";
 import { getLanguageModel } from "@/lib/ai/providers";
-import { createDocument } from "@/lib/ai/tools/create-document";
-import { editDocument } from "@/lib/ai/tools/edit-document";
 import { calculator } from "@/lib/ai/tools/calculator";
+import { createDocument } from "@/lib/ai/tools/create-document";
 import { currencyConverter } from "@/lib/ai/tools/currency-converter";
+import { editDocument } from "@/lib/ai/tools/edit-document";
 import { getWeather } from "@/lib/ai/tools/get-weather";
 import { localTime } from "@/lib/ai/tools/local-time";
+import { readArtifact } from "@/lib/ai/tools/read-artifact";
+import { requestSuggestions } from "@/lib/ai/tools/request-suggestions";
 import { timer } from "@/lib/ai/tools/timer";
 import { unitConverter } from "@/lib/ai/tools/unit-converter";
-import {
-  webSearch,
-  webSearchExtract,
-  webExtract,
-  rankTracker,
-} from "@/lib/ai/tools/web-search";
-import { requestSuggestions } from "@/lib/ai/tools/request-suggestions";
 import { updateDocument } from "@/lib/ai/tools/update-document";
 import { verifyContent } from "@/lib/ai/tools/verify";
 import {
-  createSearchProjectFilesTool,
-  createListProjectFilesTool,
+  rankTracker,
+  webExtract,
+  webSearch,
+  webSearchExtract,
+} from "@/lib/ai/tools/web-search";
+import {
   createGetFileContentTool,
+  createListProjectFilesTool,
+  createSearchProjectFilesTool,
 } from "@/lib/ai/vector-store";
-import { openai as openaiSdk } from "@ai-sdk/openai";
 import { isProductionEnvironment } from "@/lib/constants";
+import { db } from "@/lib/db";
 import {
   createStreamId,
   deleteChatById,
   getChatById,
-  getMessageCountByUserId,
   getMcpServersByUserId,
+  getMessageCountByUserId,
   getMessagesByChatId,
   getProjectById,
   saveChat,
@@ -69,13 +68,13 @@ import {
   updateChatTitleById,
   updateMessage,
 } from "@/lib/db/queries";
-import { personalization, type DBMessage } from "@/lib/db/schema";
+import { type DBMessage, personalization } from "@/lib/db/schema";
+import { ChatbotError } from "@/lib/errors";
 import {
   connectToMcpServer,
   disconnectAll,
   getToolSets,
 } from "@/lib/mcp/client";
-import { ChatbotError } from "@/lib/errors";
 import { checkIpRateLimit } from "@/lib/ratelimit";
 import type { ChatMessage } from "@/lib/types";
 import { convertToUIMessages, generateUUID } from "@/lib/utils";
@@ -104,8 +103,14 @@ export async function POST(request: Request) {
 
   try {
     console.log("[chat-debug] 1. Parsing body done");
-    const { id, message, messages, selectedChatModel, selectedVisibilityType, projectId } =
-      requestBody;
+    const {
+      id,
+      message,
+      messages,
+      selectedChatModel,
+      selectedVisibilityType,
+      projectId,
+    } = requestBody;
     console.log(
       "[chat-debug] 2. Destructured, selectedChatModel:",
       selectedChatModel
@@ -319,11 +324,24 @@ export async function POST(request: Request) {
           currencyConverter,
           unitConverter,
           localTime,
-          createDocument: createDocument({ session, dataStream, modelId: chatModel }),
+          createDocument: createDocument({
+            session,
+            dataStream,
+            modelId: chatModel,
+          }),
           editDocument: editDocument({ dataStream, session }),
-          updateDocument: updateDocument({ session, dataStream, modelId: chatModel }),
-          requestSuggestions: requestSuggestions({ session, dataStream, modelId: chatModel }),
+          updateDocument: updateDocument({
+            session,
+            dataStream,
+            modelId: chatModel,
+          }),
+          requestSuggestions: requestSuggestions({
+            session,
+            dataStream,
+            modelId: chatModel,
+          }),
           verifyContent,
+          readArtifact: readArtifact(),
           ...(process.env.OPENSERP_API_KEY || process.env.OPENSERP_BASE_URL
             ? { webSearch, webSearchExtract, webExtract, rankTracker }
             : {}),
@@ -341,14 +359,17 @@ export async function POST(request: Request) {
           "updateDocument",
           "requestSuggestions",
           "verifyContent",
+          "readArtifact",
           ...(process.env.OPENSERP_API_KEY || process.env.OPENSERP_BASE_URL
             ? ["webSearch", "webSearchExtract", "webExtract", "rankTracker"]
             : []),
         ];
 
         if (projectVectorStoreId) {
-          tools.searchProjectFiles = createSearchProjectFilesTool(projectVectorStoreId);
-          tools.listProjectFiles = createListProjectFilesTool(projectVectorStoreId);
+          tools.searchProjectFiles =
+            createSearchProjectFilesTool(projectVectorStoreId);
+          tools.listProjectFiles =
+            createListProjectFilesTool(projectVectorStoreId);
           tools.getFileContent = createGetFileContentTool(projectVectorStoreId);
           activeTools.push(
             "searchProjectFiles",
@@ -363,9 +384,7 @@ export async function POST(request: Request) {
         });
         const enabledServers = mcpServers.filter((s) => s.enabled);
 
-        await Promise.all(
-          enabledServers.map((s) => connectToMcpServer(s)),
-        );
+        await Promise.all(enabledServers.map((s) => connectToMcpServer(s)));
         const mcpTools = getToolSets();
         for (const [toolName, toolDef] of Object.entries(mcpTools)) {
           tools[toolName] = toolDef;
@@ -374,7 +393,12 @@ export async function POST(request: Request) {
 
         const result = streamText({
           model: getLanguageModel(chatModel),
-          instructions: systemPrompt({ requestHints, supportsTools, hasProject, personalization: personalizationData }),
+          instructions: systemPrompt({
+            requestHints,
+            supportsTools,
+            hasProject,
+            personalization: personalizationData,
+          }),
           messages: modelMessages,
           reasoning: modelConfig?.reasoningEffort,
           stopWhen: isStepCount(5),

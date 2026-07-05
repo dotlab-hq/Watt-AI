@@ -1,8 +1,10 @@
-import { Pencil, Download } from "lucide-react";
+import { useCallback, useRef, useState } from "react";
+import { Pencil, Download, MaximizeIcon, MinimizeIcon } from "lucide-react";
 import { toast } from "sonner";
 import { Artifact } from "@/components/chat/create-artifact";
 import { CopyIcon, RedoIcon, UndoIcon } from "@/components/chat/icons";
 import { ExcalidrawViewer } from "@/components/chat/excalidraw-viewer";
+import { cn } from "@/lib/utils";
 import type { UIArtifact } from "@/components/chat/artifact";
 
 type DiagramEditorProps = {
@@ -13,24 +15,74 @@ type DiagramEditorProps = {
   status: string;
   isInline: boolean;
   isLoading: boolean;
+  onSaveContent: (updatedContent: string, debounce: boolean) => void;
   metadata?: Record<string, unknown>;
   setMetadata?: (updater: (prev: Record<string, unknown>) => Record<string, unknown>) => void;
 };
 
-function DiagramEditor(props: DiagramEditorProps) {
-  if (props.isLoading) {
+function DiagramEditor({
+  title,
+  content,
+  status,
+  isLoading,
+  onSaveContent,
+  metadata,
+  setMetadata,
+}: DiagramEditorProps) {
+  const isFullscreen = metadata?.diagramFullscreen === true;
+  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const toggleFullscreen = useCallback(() => {
+    if (!setMetadata) return;
+    setMetadata((prev) => ({ ...prev, diagramFullscreen: !prev?.diagramFullscreen }));
+  }, [setMetadata]);
+
+  const handleChange = useCallback(
+    (updatedContent: string) => {
+      // Debounce saves: wait 1 second after last change
+      if (saveTimerRef.current) {
+        clearTimeout(saveTimerRef.current);
+      }
+      saveTimerRef.current = setTimeout(() => {
+        onSaveContent(updatedContent, false);
+        saveTimerRef.current = null;
+      }, 1000);
+    },
+    [onSaveContent],
+  );
+
+  if (isLoading || (status === "streaming" && !content)) {
     return (
-      <div className="flex h-full items-center justify-center bg-muted">
-        <div className="animate-pulse text-sm text-muted-foreground">
-          Loading diagram...
-        </div>
+      <div className="flex h-full items-center justify-center gap-4 text-muted-foreground">
+        <div className="animate-pulse text-sm">Generating diagram...</div>
       </div>
     );
   }
 
   return (
-    <div className="h-full w-full">
-      <ExcalidrawViewer content={props.content} />
+    <div className={cn("flex h-full flex-col", isFullscreen && "fixed inset-0 z-[100] bg-background")}>
+      <div className="sticky top-0 z-10 flex items-center justify-between border-b border-border/50 bg-background px-4 py-2">
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <rect x="3" y="3" width="7" height="7" rx="1" />
+            <rect x="14" y="3" width="7" height="7" rx="1" />
+            <rect x="3" y="14" width="7" height="7" rx="1" />
+            <path d="M14 17.5h7M17.5 14v7" />
+          </svg>
+          <span className="font-medium">Excalidraw</span>
+        </div>
+        <button
+          className="rounded-md p-1.5 text-muted-foreground transition-colors hover:text-foreground"
+          onClick={toggleFullscreen}
+          title={isFullscreen ? "Exit fullscreen" : "Fullscreen"}
+          type="button"
+        >
+          {isFullscreen ? <MinimizeIcon size={14} /> : <MaximizeIcon size={14} />}
+        </button>
+      </div>
+      <div className="flex-1">
+        <ExcalidrawViewer content={content} onChange={handleChange} />
+      </div>
     </div>
   );
 }
@@ -46,8 +98,8 @@ export const diagramArtifact = new Artifact<"diagram">({
         content: streamPart.data,
         isVisible:
           draftArtifact.status === "streaming" &&
-          draftArtifact.content.length > 100 &&
-          draftArtifact.content.length < 110
+          draftArtifact.content.length === 0 &&
+          streamPart.data.length > 0
             ? true
             : draftArtifact.isVisible,
         status: "streaming",
