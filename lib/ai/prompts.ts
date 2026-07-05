@@ -114,7 +114,9 @@ function buildPersonalizationPrompt(hints: PersonalizationHints): string {
   // Style
   if (hints.baseStyle && hints.baseStyle !== "default") {
     const style = STYLE_PROMPTS[hints.baseStyle];
-    if (style) parts.push(style);
+    if (style) {
+      parts.push(style);
+    }
   }
 
   // Characteristics
@@ -139,8 +141,11 @@ function buildPersonalizationPrompt(hints: PersonalizationHints): string {
 
   for (const [key, labels] of Object.entries(charMap)) {
     const val = hints[key as keyof PersonalizationHints];
-    if (val === "more") parts.push(labels.more);
-    else if (val === "less") parts.push(labels.less);
+    if (val === "more") {
+      parts.push(labels.more);
+    } else if (val === "less") {
+      parts.push(labels.less);
+    }
   }
 
   // Custom instructions
@@ -152,14 +157,17 @@ function buildPersonalizationPrompt(hints: PersonalizationHints): string {
 
   // About user
   const aboutParts: string[] = [];
-  if (hints.nickname?.trim())
+  if (hints.nickname?.trim()) {
     aboutParts.push(`The user's name is "${hints.nickname.trim()}".`);
-  if (hints.occupation?.trim())
+  }
+  if (hints.occupation?.trim()) {
     aboutParts.push(`The user works as: ${hints.occupation.trim()}.`);
-  if (hints.moreAboutYou?.trim())
+  }
+  if (hints.moreAboutYou?.trim()) {
     aboutParts.push(
       `Additional context about the user:\n${hints.moreAboutYou.trim()}`
     );
+  }
   if (aboutParts.length > 0) {
     parts.push(aboutParts.join("\n"));
   }
@@ -234,17 +242,47 @@ You have access to persistent memory tools. Use them to remember information acr
 - Prefer semantic tier for lasting user information
 `;
 
+export const searchToolsPrompt = `
+## Search Tools
+
+You have access to web search tools powered by OpenSERP. Use them proactively — don't wait for the user to explicitly ask for a search.
+
+### \`webSearch\`
+Search the web and return results with titles, URLs, and snippets. Use this when the user asks a factual question, current events, or any question that benefits from up-to-date information.
+
+### \`webSearchExtract\`
+Search the web and extract cleaned page content from the top results. Use this when you need in-depth information from actual pages, not just snippets.
+
+### \`webImageSearch\`
+Search for images related to a query. Returns image URLs, thumbnails, dimensions, and source pages. **Use this whenever the user asks about images, pictures, photos, or visual content.** Also proactively use it alongside \`webSearch\` when a search result would benefit from visual context — for example: "show me what this looks like", "find pictures of X", product searches, design inspiration, travel destinations, food, animals, art, architecture, or any topic where images add value. Pairing \`webImageSearch\` with \`webSearch\` gives the user both text answers and a visual carousel.
+
+### \`webExtract\`
+Extract cleaned page content from a single URL as markdown. Use this when the user gives you a specific link and wants to read or summarize it.
+
+### \`rankTracker\`
+Check where a domain ranks in search results for a set of keywords. Use this for SEO rank tracking or competitive analysis.
+
+**When to search:**
+- The user asks about current events, news, or recent developments
+- The user asks a factual question that may have changed recently
+- The user asks about products, services, or reviews
+- The user wants images, photos, or visual references — call \`webImageSearch\` alongside \`webSearch\`
+- You are unsure about something and search would help provide an accurate answer
+`;
+
 export const systemPrompt = ({
   requestHints,
   supportsTools,
   hasProject,
   hasMemory,
+  hasSearchTools,
   personalization,
 }: {
   requestHints: RequestHints;
   supportsTools: boolean;
   hasProject?: boolean;
   hasMemory?: boolean;
+  hasSearchTools?: boolean;
   personalization?: PersonalizationHints;
 }) => {
   const requestPrompt = getRequestPromptFromHints(requestHints);
@@ -263,6 +301,10 @@ export const systemPrompt = ({
 
   if (supportsTools) {
     prompt += `\n\n${artifactsPrompt}`;
+  }
+
+  if (hasSearchTools) {
+    prompt += `\n\n${searchToolsPrompt}`;
   }
 
   if (personalization) {

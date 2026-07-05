@@ -19,7 +19,7 @@ function ImageLightbox({
   onClose: () => void;
 }) {
   const handleKeyDown = useCallback(
-    (e: KeyboardEvent) => {
+    (e: React.KeyboardEvent | KeyboardEvent) => {
       if (e.key === "Escape") {
         onClose();
       }
@@ -28,8 +28,9 @@ function ImageLightbox({
   );
 
   useEffect(() => {
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
+    const handler = (e: KeyboardEvent) => handleKeyDown(e);
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
   }, [handleKeyDown]);
 
   return (

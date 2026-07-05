@@ -186,7 +186,7 @@ const PurePreviewMessage = ({
 
       if (state === "output-available") {
         const output = part.output;
-        let content;
+        let content: import("react").ReactNode;
         switch (toolName) {
           case "getWeather":
             content = <Weather weatherAtLocation={output} />;

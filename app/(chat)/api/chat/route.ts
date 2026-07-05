@@ -12,7 +12,7 @@ import { checkBotId } from "botid/server";
 import { eq } from "drizzle-orm";
 import { after } from "next/server";
 import { createResumableStreamContext } from "resumable-stream";
-import { auth, type UserType } from "@/app/(auth)/auth";
+import { auth } from "@/app/(auth)/auth";
 import { generateTitleFromUserMessage } from "@/app/(chat)/actions";
 import {
   type PostRequestBody,
@@ -67,7 +67,6 @@ import {
   deleteChatById,
   getChatById,
   getMcpServersByUserId,
-  getMessageCountByUserId,
   getMessagesByChatId,
   getProjectById,
   incrementChatTokenUsage,
@@ -147,14 +146,12 @@ export async function POST(request: Request) {
 
     await checkIpRateLimit(ipAddress(request));
 
-    const userType: UserType = session.user.type;
-
-    const messageCount = await getMessageCountByUserId({
-      id: session.user.id,
-      differenceInHours: 1,
-    });
-
     // IMPORTANT: DO NOT DELETE THIS CODE — rate limit temporarily disabled, not removed.
+    // const userType: UserType = session.user.type;
+    // const messageCount = await getMessageCountByUserId({
+    //   id: session.user.id,
+    //   differenceInHours: 1,
+    // });
     // if (messageCount > entitlementsByUserType[userType].maxMessagesPerHour) {
     //   return new ChatbotError("rate_limit:chat").toResponse();
     // }
@@ -465,6 +462,9 @@ export async function POST(request: Request) {
             supportsTools,
             hasProject,
             hasMemory: Boolean(process.env.MONGODB_URI),
+            hasSearchTools: Boolean(
+              process.env.OPENSERP_API_KEY || process.env.OPENSERP_BASE_URL
+            ),
             personalization: personalizationData,
           }),
           messages: modelMessages,

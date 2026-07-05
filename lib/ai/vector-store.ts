@@ -20,7 +20,6 @@ export async function deleteVectorStore(vectorStoreId: string): Promise<void> {
 export async function uploadFileToVectorStore({
   vectorStoreId,
   file,
-  fileName,
 }: {
   vectorStoreId: string;
   file: File;
@@ -151,7 +150,12 @@ export async function searchVectorStore({
 // These return AI SDK tools bound to a specific vector store.
 // The LLM calls them autonomously — the system prompt instructs when to use each.
 
-const fileStatusEnum = z.enum(["in_progress", "completed", "failed", "cancelled"]);
+const fileStatusEnum = z.enum([
+  "in_progress",
+  "completed",
+  "failed",
+  "cancelled",
+]);
 
 /**
  * Tool 1: Semantic search across all project files.
@@ -164,7 +168,9 @@ export function createSearchProjectFilesTool(vectorStoreId: string) {
     inputSchema: z.object({
       query: z
         .string()
-        .describe("Natural language search query describing the information you need"),
+        .describe(
+          "Natural language search query describing the information you need"
+        ),
       maxResults: z
         .number()
         .int()
@@ -174,7 +180,11 @@ export function createSearchProjectFilesTool(vectorStoreId: string) {
         .describe("Maximum number of results to return (default 10)"),
     }),
     execute: async ({ query, maxResults }) => {
-      const results = await searchVectorStore({ vectorStoreId, query, maxResults });
+      const results = await searchVectorStore({
+        vectorStoreId,
+        query,
+        maxResults,
+      });
       if (results.length === 0) {
         return "No relevant content found in project files for this query.";
       }
@@ -245,7 +255,9 @@ export function createGetFileContentTool(vectorStoreId: string) {
       for await (const chunk of openai.vectorStores.files.content(fileId, {
         vector_store_id: vectorStoreId,
       })) {
-        if (chunk.text) pages.push(chunk.text);
+        if (chunk.text) {
+          pages.push(chunk.text);
+        }
       }
 
       if (pages.length === 0) {

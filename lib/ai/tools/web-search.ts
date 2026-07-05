@@ -43,7 +43,7 @@ export const webSearch = tool({
       month: "long",
       year: "numeric",
     });
-    const searchQuery = `${query} ${monthYear}`;
+    const searchQuery = `${query} latest ${monthYear}`;
     const { results } = await client.search({
       engine,
       text: searchQuery,
@@ -85,7 +85,7 @@ export const webSearchExtract = tool({
       month: "long",
       year: "numeric",
     });
-    const searchQuery = `${query} ${monthYear}`;
+    const searchQuery = `${query} latest ${monthYear}`;
     const { results } = await client.search({
       engine,
       text: searchQuery,
