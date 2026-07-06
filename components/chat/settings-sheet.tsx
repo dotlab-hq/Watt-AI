@@ -5,6 +5,7 @@ import {
   Check,
   FileIcon,
   FolderIcon,
+  LightbulbIcon,
   LinkIcon,
   LoaderIcon,
   LogOutIcon,
@@ -26,6 +27,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { GeneralTab } from "@/components/chat/general-tab";
 import { PersonalizationTab } from "@/components/chat/personalize-tab";
+import { SkillsTab } from "@/components/chat/skills-tab";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -73,7 +75,13 @@ import { authClient, useSession } from "@/lib/auth-client";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
-type TabId = "account" | "projects" | "mcp" | "general" | "personalize";
+type TabId =
+  | "account"
+  | "projects"
+  | "mcp"
+  | "skills"
+  | "general"
+  | "personalize";
 
 type Project = {
   id: string;
@@ -114,6 +122,7 @@ const navItems: { id: TabId; label: string; icon: typeof User | null }[] = [
   { id: "account", label: "Account", icon: User },
   { id: "projects", label: "Projects", icon: FolderIcon },
   { id: "mcp", label: "MCP Servers", icon: Server },
+  { id: "skills", label: "Skills", icon: LightbulbIcon },
   { id: "general", label: "General", icon: SettingsIcon },
   { id: "personalize", label: "Personalization", icon: UserRoundPenIcon },
 ];
@@ -257,6 +266,7 @@ function InnerSettings({
           {activeTab === "account" && <AccountTab />}
           {activeTab === "projects" && <ProjectsTab />}
           {activeTab === "mcp" && <McpTab />}
+          {activeTab === "skills" && <SkillsTab />}
           {activeTab === "general" && <GeneralTab />}
           {activeTab === "personalize" && <PersonalizationTab />}
         </div>
