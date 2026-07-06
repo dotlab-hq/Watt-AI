@@ -162,8 +162,8 @@ export async function deleteSkillById({
   id: string;
 }): Promise<boolean> {
   try {
-    const result = await db.delete(skill).where(eq(skill.id, id));
-    return result.rowCount > 0;
+    const result = await db.delete(skill).where(eq(skill.id, id)).returning();
+    return result.length > 0;
   } catch (_error) {
     throw new ChatbotError("bad_request:database", "Failed to delete skill");
   }
@@ -177,12 +177,13 @@ export async function getUserSkills({
   userId: string;
 }): Promise<(UserSkill & { skill: Skill })[]> {
   try {
-    return (await db
+    const rows = await db
       .select()
       .from(userSkill)
       .innerJoin(skill, eq(userSkill.skillId, skill.id))
       .where(eq(userSkill.userId, userId))
-      .orderBy(desc(userSkill.createdAt))) as (UserSkill & { skill: Skill })[];
+      .orderBy(desc(userSkill.createdAt));
+    return rows.map((row) => ({ ...row.UserSkill, skill: row.Skill }));
   } catch (_error) {
     throw new ChatbotError("bad_request:database", "Failed to get user skills");
   }
@@ -261,8 +262,9 @@ export async function deleteUserSkill({
   try {
     const result = await db
       .delete(userSkill)
-      .where(and(eq(userSkill.userId, userId), eq(userSkill.skillId, skillId)));
-    return result.rowCount > 0;
+      .where(and(eq(userSkill.userId, userId), eq(userSkill.skillId, skillId)))
+      .returning();
+    return result.length > 0;
   } catch (_error) {
     throw new ChatbotError(
       "bad_request:database",

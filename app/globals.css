@@ -500,12 +500,41 @@ textarea:focus-visible {
   isolation: isolate;
 }
 
-.avatar-gradient {
-  background: linear-gradient(
-    135deg,
-    hsl(var(--avatar-hue), 70%, 50%),
-    hsl(var(--avatar-hue-offset), 60%, 40%)
-  );
+.avatar-gradient-0 {
+  background: linear-gradient(135deg, hsl(0, 70%, 50%), hsl(30, 60%, 40%));
+}
+.avatar-gradient-30 {
+  background: linear-gradient(135deg, hsl(30, 70%, 50%), hsl(60, 60%, 40%));
+}
+.avatar-gradient-60 {
+  background: linear-gradient(135deg, hsl(60, 70%, 50%), hsl(90, 60%, 40%));
+}
+.avatar-gradient-90 {
+  background: linear-gradient(135deg, hsl(90, 70%, 50%), hsl(120, 60%, 40%));
+}
+.avatar-gradient-120 {
+  background: linear-gradient(135deg, hsl(120, 70%, 50%), hsl(150, 60%, 40%));
+}
+.avatar-gradient-150 {
+  background: linear-gradient(135deg, hsl(150, 70%, 50%), hsl(180, 60%, 40%));
+}
+.avatar-gradient-180 {
+  background: linear-gradient(135deg, hsl(180, 70%, 50%), hsl(210, 60%, 40%));
+}
+.avatar-gradient-210 {
+  background: linear-gradient(135deg, hsl(210, 70%, 50%), hsl(240, 60%, 40%));
+}
+.avatar-gradient-240 {
+  background: linear-gradient(135deg, hsl(240, 70%, 50%), hsl(270, 60%, 40%));
+}
+.avatar-gradient-270 {
+  background: linear-gradient(135deg, hsl(270, 70%, 50%), hsl(300, 60%, 40%));
+}
+.avatar-gradient-300 {
+  background: linear-gradient(135deg, hsl(300, 70%, 50%), hsl(330, 60%, 40%));
+}
+.avatar-gradient-330 {
+  background: linear-gradient(135deg, hsl(330, 70%, 50%), hsl(360, 60%, 40%));
 }
 
 /* ── Personalize: Font families ──────────────────────────────────────────── */

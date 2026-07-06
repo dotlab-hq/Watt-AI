@@ -308,15 +308,10 @@ function UserAvatar({
 
   const textSize =
     size === "sm" ? "text-xs" : size === "lg" ? "text-2xl" : "text-sm";
+  const hueBucket = (Math.round(hue / 30) * 30) % 360;
   return (
     <div
-      className={`${sizeClasses[size]} flex items-center justify-center rounded-full ${textSize} font-semibold text-white shrink-0 ${className} avatar-gradient`}
-      style={
-        {
-          "--avatar-hue": hue,
-          "--avatar-hue-offset": (hue + 30) % 360,
-        } as React.CSSProperties
-      }
+      className={`${sizeClasses[size]} flex items-center justify-center rounded-full ${textSize} font-semibold text-white shrink-0 ${className} avatar-gradient-${hueBucket}`}
     >
       {initials}
     </div>
