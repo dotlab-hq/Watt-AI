@@ -4,7 +4,7 @@ import { drizzleAdapter } from "@better-auth/drizzle-adapter";
 import { sso } from "@better-auth/sso";
 import { betterAuth } from "better-auth";
 import { nextCookies } from "better-auth/next-js";
-import { organization } from "better-auth/plugins";
+import { admin, organization } from "better-auth/plugins";
 import { headers } from "next/headers";
 import { db } from "@/lib/db";
 import * as schema from "@/lib/db/schema";
@@ -18,6 +18,7 @@ export interface Session {
     name: string;
     image: string | null;
     type: UserType;
+    role: string;
   };
 }
 
@@ -64,7 +65,7 @@ export const betterAuthInstance = betterAuth({
       path: "/",
     },
   },
-  plugins: [organization(), sso(), nextCookies()],
+  plugins: [admin(), organization(), sso(), nextCookies()],
 });
 
 /**
@@ -88,6 +89,7 @@ export async function auth(): Promise<Session | null> {
       name: session.user.name || "",
       image: (u.image as string) || null,
       type: (u.type as UserType) || "regular",
+      role: (u.role as string) || "user",
     },
   };
 }

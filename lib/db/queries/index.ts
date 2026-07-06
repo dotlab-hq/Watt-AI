@@ -53,6 +53,22 @@ export {
   getProjectsByUserId,
   updateProject,
 } from "./projects";
+// ─── Skills ─────────────────────────────────────────────────────────────────
+export {
+  createSkill,
+  deleteSkillById,
+  deleteUserSkill,
+  getAllSkills,
+  getEnabledUserSkills,
+  getSkillById,
+  getSkillBySlug,
+  getSkillsByOwnerId,
+  getSystemSkills,
+  getUserSkills,
+  initDefaultSystemSkillsForUser,
+  toggleUserSkill,
+  updateSkill,
+} from "./skills";
 // ─── Streams ────────────────────────────────────────────────────────────────
 export { createStreamId, getStreamIdsByChatId } from "./streams";
 // ─── Suggestions ────────────────────────────────────────────────────────────

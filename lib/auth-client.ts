@@ -1,5 +1,5 @@
 import { createAuthClient } from "better-auth/client";
-import { organizationClient } from "better-auth/client/plugins";
+import { adminClient, organizationClient } from "better-auth/client/plugins";
 import { useCallback, useEffect, useState } from "react";
 
 export const authClient = createAuthClient({
@@ -7,7 +7,7 @@ export const authClient = createAuthClient({
     process.env.NEXT_PUBLIC_BETTER_AUTH_URL ||
     process.env.NEXT_PUBLIC_APP_URL ||
     "",
-  plugins: [organizationClient()],
+  plugins: [adminClient(), organizationClient()],
 });
 
 export const { signIn, signUp, signOut } = authClient;

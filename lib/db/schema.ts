@@ -94,7 +94,9 @@ export const document = chatbot.table(
     createdAt: timestamp("createdAt").notNull(),
     title: text("title").notNull(),
     content: text("content"),
-    kind: varchar("text", { enum: ["text", "code", "image", "sheet", "svg", "html", "diagram"] })
+    kind: varchar("text", {
+      enum: ["text", "code", "image", "sheet", "svg", "html", "diagram"],
+    })
       .notNull()
       .default("text"),
     userId: text("userId")
@@ -163,6 +165,10 @@ export const user = chatbot.table("user", {
     .defaultNow()
     .$onUpdate(() => /* @__PURE__ */ new Date())
     .notNull(),
+  role: text("role"),
+  banned: boolean("banned").default(false),
+  banReason: text("ban_reason"),
+  banExpires: timestamp("ban_expires"),
   type: text("type").default("regular"),
 });
 
@@ -181,6 +187,7 @@ export const session = chatbot.table(
     userId: text("user_id")
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
+    impersonatedBy: text("impersonated_by"),
     activeOrganizationId: text("active_organization_id"),
   },
   (table) => [index("session_userId_idx").on(table.userId)]
@@ -301,7 +308,15 @@ export const personalization = chatbot.table("Personalization", {
   showAvatars: boolean("show_avatars").notNull().default(false),
   // AI Personalization
   baseStyle: varchar("base_style", {
-    enum: ["default", "professional", "friendly", "candid", "quirky", "efficient", "cynical"],
+    enum: [
+      "default",
+      "professional",
+      "friendly",
+      "candid",
+      "quirky",
+      "efficient",
+      "cynical",
+    ],
   })
     .notNull()
     .default("default"),
@@ -311,7 +326,9 @@ export const personalization = chatbot.table("Personalization", {
   enthusiastic: varchar("enthusiastic", { enum: ["default", "more", "less"] })
     .notNull()
     .default("default"),
-  headersAndLists: varchar("headers_and_lists", { enum: ["default", "more", "less"] })
+  headersAndLists: varchar("headers_and_lists", {
+    enum: ["default", "more", "less"],
+  })
     .notNull()
     .default("default"),
   emoji: varchar("emoji", { enum: ["default", "more", "less"] })
@@ -341,12 +358,15 @@ export const ssoProvider = chatbot.table("sso_provider", {
   domain: text("domain").notNull(),
 });
 
-export const personalizationRelations = relations(personalization, ({ one }) => ({
-  user: one(user, {
-    fields: [personalization.userId],
-    references: [user.id],
-  }),
-}));
+export const personalizationRelations = relations(
+  personalization,
+  ({ one }) => ({
+    user: one(user, {
+      fields: [personalization.userId],
+      references: [user.id],
+    }),
+  })
+);
 
 export const sessionRelations = relations(session, ({ one }) => ({
   user: one(user, {
@@ -503,6 +523,80 @@ export const mcpServerRelations = relations(mcpServer, ({ one }) => ({
   }),
 }));
 
+// ─── Skills ─────────────────────────────────────────────────────────────────
+
+export const skill = chatbot.table(
+  "Skill",
+  {
+    id: uuid("id").primaryKey().notNull().defaultRandom(),
+    name: text("name").notNull(),
+    slug: text("slug").notNull().unique(),
+    description: text("description"),
+    content: text("content").notNull(),
+    isSystem: boolean("is_system").notNull().default(false),
+    ownerId: text("owner_id").references(() => user.id, {
+      onDelete: "cascade",
+    }),
+    providerReference: text("provider_reference"),
+    createdAt: timestamp("createdAt").notNull().defaultNow(),
+    updatedAt: timestamp("updatedAt")
+      .notNull()
+      .defaultNow()
+      .$onUpdate(() => new Date()),
+  },
+  (table) => [
+    index("skill_ownerId_idx").on(table.ownerId),
+    index("skill_isSystem_idx").on(table.isSystem),
+  ]
+);
+
+export type Skill = InferSelectModel<typeof skill>;
+
+export const userSkill = chatbot.table(
+  "UserSkill",
+  {
+    id: uuid("id").primaryKey().notNull().defaultRandom(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    skillId: uuid("skill_id")
+      .notNull()
+      .references(() => skill.id, { onDelete: "cascade" }),
+    isEnabled: boolean("is_enabled").notNull().default(true),
+    createdAt: timestamp("createdAt").notNull().defaultNow(),
+    updatedAt: timestamp("updatedAt")
+      .notNull()
+      .defaultNow()
+      .$onUpdate(() => new Date()),
+  },
+  (table) => [
+    index("userSkill_userId_idx").on(table.userId),
+    index("userSkill_skillId_idx").on(table.skillId),
+    index("userSkill_userId_skillId_idx").on(table.userId, table.skillId),
+  ]
+);
+
+export type UserSkill = InferSelectModel<typeof userSkill>;
+
+export const skillRelations = relations(skill, ({ one, many }) => ({
+  owner: one(user, {
+    fields: [skill.ownerId],
+    references: [user.id],
+  }),
+  userSkills: many(userSkill),
+}));
+
+export const userSkillRelations = relations(userSkill, ({ one }) => ({
+  user: one(user, {
+    fields: [userSkill.userId],
+    references: [user.id],
+  }),
+  skill: one(skill, {
+    fields: [userSkill.skillId],
+    references: [skill.id],
+  }),
+}));
+
 // ─── Update existing relations ──────────────────────────────────────────────
 
 export const chatRelations = relations(chat, ({ one }) => ({
@@ -525,4 +619,6 @@ export const userRelations = relations(user, ({ many, one }) => ({
   projects: many(project),
   mcpServers: many(mcpServer),
   personalization: one(personalization),
+  ownedSkills: many(skill),
+  userSkills: many(userSkill),
 }));

@@ -1,7 +1,7 @@
 import { drizzleAdapter } from "@better-auth/drizzle-adapter";
 import { sso } from "@better-auth/sso";
 import { betterAuth } from "better-auth";
-import { organization } from "better-auth/plugins";
+import { admin, organization } from "better-auth/plugins";
 import { db } from "@/lib/db";
 import {
   chat as chatModel,
@@ -65,7 +65,7 @@ const auth = betterAuth({
       path: "/",
     },
   },
-  plugins: [organization(), sso()],
+  plugins: [admin(), organization(), sso()],
 });
 
 export { auth };

@@ -64,6 +64,20 @@
       "when": 1783274399359,
       "tag": "0008_uneven_crystal",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1783314642818,
+      "tag": "0009_add-skills-feature",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1783317164924,
+      "tag": "0010_add-admin-plugin-fields",
+      "breakpoints": true
     }
   ]
 }

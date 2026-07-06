@@ -66,6 +66,7 @@ import {
   createStreamId,
   deleteChatById,
   getChatById,
+  getEnabledUserSkills,
   getMcpServersByUserId,
   getMessagesByChatId,
   getProjectById,
@@ -343,6 +344,20 @@ export async function POST(request: Request) {
       }
     }
 
+    // Fetch enabled skills for the user (passed as provider skill references)
+    let enabledSkillsForInference: Array<{ providerReference: string | null }> =
+      [];
+    try {
+      const allEnabledSkills = await getEnabledUserSkills({
+        userId: session.user.id,
+      });
+      enabledSkillsForInference = allEnabledSkills.filter(
+        (s) => s.providerReference && s.providerReference.trim().length > 0
+      );
+    } catch {
+      // non-critical, continue without skills
+    }
+
     // Mutable reference shared between execute and onEnd for token usage capture
     let capturedUsagePromise: Promise<ReturnType<typeof extractTokenUsage>> =
       Promise.resolve(null);
@@ -454,6 +469,41 @@ export async function POST(request: Request) {
           activeTools.push(toolName);
         }
 
+        // Build providerOptions for skill references
+        const isAnthropicModel = chatModel.startsWith("claude-");
+        const providerSkillRefs = enabledSkillsForInference.map((s) => ({
+          type: "custom" as const,
+          providerReference: String(s.providerReference),
+        }));
+
+        let providerOptions: Record<string, any> = {};
+        if (providerSkillRefs.length > 0) {
+          if (isAnthropicModel) {
+            providerOptions = {
+              anthropic: {
+                container: {
+                  skills: providerSkillRefs,
+                },
+              },
+            };
+          } else {
+            // OpenAI: skills are passed via shell tool environment
+            providerOptions = {
+              openai: {
+                shell: {
+                  environment: {
+                    type: "containerAuto",
+                    skills: providerSkillRefs.map((ref) => ({
+                      type: "skillReference",
+                      providerReference: ref.providerReference,
+                    })),
+                  },
+                },
+              },
+            };
+          }
+        }
+
         const result = streamText({
           maxOutputTokens: 32_000,
           model: getLanguageModel(chatModel),
@@ -468,6 +518,7 @@ export async function POST(request: Request) {
             personalization: personalizationData,
           }),
           messages: modelMessages,
+          ...(providerSkillRefs.length > 0 ? { providerOptions } : {}),
           reasoning: modelConfig?.reasoningEffort,
           stopWhen: isStepCount(5),
           activeTools: isReasoningModel && !supportsTools ? [] : activeTools,

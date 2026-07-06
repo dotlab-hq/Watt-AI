@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  BrainIcon,
   CheckIcon,
   FileIcon,
   FolderIcon,
@@ -23,6 +24,9 @@ import {
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
+import { GeneralTab } from "@/components/chat/general-tab";
+import { PersonalizationTab } from "@/components/chat/personalize-tab";
+import { SkillsTab } from "@/components/chat/skills-tab";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -47,12 +51,16 @@ import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { authClient, useSession } from "@/lib/auth-client";
-import { GeneralTab } from "@/components/chat/general-tab";
-import { PersonalizationTab } from "@/components/chat/personalize-tab";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
-type TabId = "account" | "projects" | "mcp" | "general" | "personalize";
+type TabId =
+  | "account"
+  | "projects"
+  | "mcp"
+  | "skills"
+  | "general"
+  | "personalize";
 
 type Project = {
   id: string;
@@ -101,6 +109,7 @@ const tabs: { id: TabId; label: string; icon: typeof UserIcon | null }[] = [
   { id: "account", label: "Account", icon: UserIcon },
   { id: "projects", label: "Projects", icon: FolderIcon },
   { id: "mcp", label: "MCP Servers", icon: ServerIcon },
+  { id: "skills", label: "Skills", icon: BrainIcon },
   { id: "general", label: "General", icon: SettingsIcon },
   { id: "personalize", label: "Personalization", icon: UserRoundPenIcon },
 ];
@@ -159,6 +168,7 @@ export default function SettingsPage() {
       {activeTab === "account" && <AccountTab />}
       {activeTab === "projects" && <ProjectsTab />}
       {activeTab === "mcp" && <McpTab />}
+      {activeTab === "skills" && <SkillsTab />}
       {activeTab === "general" && <GeneralTab />}
       {activeTab === "personalize" && <PersonalizationTab />}
     </div>
@@ -294,7 +304,8 @@ function AccountTab() {
           <div className="flex-1 min-w-0">
             <h2 className="text-sm font-medium">Sign out of this device</h2>
             <p className="mt-0.5 text-xs text-muted-foreground">
-              You will be redirected to the login page. You can sign back in at any time.
+              You will be redirected to the login page. You can sign back in at
+              any time.
             </p>
           </div>
           <Button
@@ -369,9 +380,7 @@ function ProjectsTab() {
   const loadChats = useCallback(async (projectId: string) => {
     setLoadingChats(true);
     try {
-      const response = await fetch(
-        `/api/projects/${projectId}/chats?limit=50`
-      );
+      const response = await fetch(`/api/projects/${projectId}/chats?limit=50`);
       if (response.ok) {
         const data = (await response.json()) as { chats: ProjectChat[] };
         setProjectChats(data.chats);
@@ -635,8 +644,8 @@ function ProjectsTab() {
                 </div>
               ) : projectChats.length === 0 ? (
                 <p className="py-3 text-center text-xs text-muted-foreground">
-                  No chats in this project yet. Start a chat from the sidebar
-                  to link it here.
+                  No chats in this project yet. Start a chat from the sidebar to
+                  link it here.
                 </p>
               ) : (
                 <div className="space-y-1.5">
@@ -699,8 +708,8 @@ function ProjectsTab() {
                 </div>
               ) : projectFiles.length === 0 ? (
                 <p className="py-3 text-center text-xs text-muted-foreground">
-                  No files uploaded yet. Upload documents to populate the
-                  vector store.
+                  No files uploaded yet. Upload documents to populate the vector
+                  store.
                 </p>
               ) : (
                 <div className="space-y-1.5">
@@ -712,9 +721,7 @@ function ProjectsTab() {
                       <div className="flex items-center gap-2">
                         <FileIcon className="size-4 text-muted-foreground" />
                         <div>
-                          <p className="text-xs font-medium">
-                            {file.fileName}
-                          </p>
+                          <p className="text-xs font-medium">{file.fileName}</p>
                           <p className="text-[10px] text-muted-foreground">
                             {file.fileSize
                               ? `${(file.fileSize / 1024).toFixed(1)} KB`
