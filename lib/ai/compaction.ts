@@ -1,6 +1,7 @@
-import { generateText, type LanguageModelUsage } from "ai";
+import type { LanguageModelUsage } from "ai";
 import { eq } from "drizzle-orm";
 import { getLanguageModel } from "@/lib/ai/providers";
+import { retryableGenerateText } from "@/lib/ai/retry";
 import { db } from "@/lib/db";
 import {
   chat,
@@ -171,7 +172,7 @@ export async function compactConversation({
   }
 
   // Use the LLM to generate a summary
-  const { text: summary } = await generateText({
+  const { text: summary } = await retryableGenerateText({
     maxOutputTokens: 32_000,
     model: getLanguageModel(modelId),
     prompt: `You are a conversation summarizer. Summarize the following conversation between a user and an AI assistant.

@@ -1,11 +1,12 @@
 "use server";
 
-import { generateText, type UIMessage } from "ai";
+import type { UIMessage } from "ai";
 import { cookies } from "next/headers";
 import { auth } from "@/app/(auth)/auth";
 import type { VisibilityType } from "@/components/chat/visibility-selector";
 import { titlePrompt } from "@/lib/ai/prompts";
 import { getTitleModel } from "@/lib/ai/providers";
+import { retryableGenerateText } from "@/lib/ai/retry";
 import {
   deleteMessagesByChatIdAfterTimestamp,
   getChatById,
@@ -26,7 +27,7 @@ export async function generateTitleFromUserMessage({
 }: {
   message: UIMessage;
 }) {
-  const { text } = await generateText({
+  const { text } = await retryableGenerateText({
     maxOutputTokens: 32_000,
     model: getTitleModel(),
     instructions: titlePrompt,

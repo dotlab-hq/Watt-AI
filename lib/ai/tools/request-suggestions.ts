@@ -47,6 +47,7 @@ export const requestSuggestions = ({
       >[] = [];
 
       const { partialOutputStream } = streamText({
+        maxRetries: 2,
         maxOutputTokens: 32_000,
         model: getLanguageModel(modelId),
         system:

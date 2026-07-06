@@ -5,7 +5,6 @@ import {
   createUIMessageStreamResponse,
   generateId,
   isStepCount,
-  streamText,
   toUIMessageStream,
 } from "ai";
 import { checkBotId } from "botid/server";
@@ -35,6 +34,7 @@ import {
   systemPrompt,
 } from "@/lib/ai/prompts";
 import { getLanguageModel } from "@/lib/ai/providers";
+import { retryableStreamText } from "@/lib/ai/retry";
 import { calculator } from "@/lib/ai/tools/calculator";
 import { createDocument } from "@/lib/ai/tools/create-document";
 import { currencyConverter } from "@/lib/ai/tools/currency-converter";
@@ -507,7 +507,7 @@ export async function POST(request: Request) {
           }
         }
 
-        const result = streamText({
+        const { stream, usage } = retryableStreamText({
           maxOutputTokens: 32_000,
           model: getLanguageModel(chatModel),
           instructions: systemPrompt({
@@ -533,13 +533,11 @@ export async function POST(request: Request) {
         });
 
         // Capture token usage from the stream
-        capturedUsagePromise = Promise.resolve(result.usage)
-          .then((usage) => extractTokenUsage(usage))
+        capturedUsagePromise = Promise.resolve(usage)
+          .then((result) => extractTokenUsage(result))
           .catch(() => null);
 
-        dataStream.merge(
-          toUIMessageStream({ stream: result.stream, sendReasoning: true })
-        );
+        dataStream.merge(toUIMessageStream({ stream, sendReasoning: true }));
 
         if (titlePromise) {
           try {
