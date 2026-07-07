@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/collapsible";
 import { useArtifact } from "@/hooks/use-artifact";
 import { cn } from "@/lib/utils";
+import { artifactDefinitions, type UIArtifact } from "./artifact";
 
 interface SubagentWorkProps {
   isStreaming?: boolean;
@@ -44,12 +45,26 @@ export function SubagentWork({
         lowerContent.includes("web search")
       ) {
         // Auto-create text artifact from research results
-        setArtifact({
-          kind: "text",
-          mode: "create",
-          content,
-          title: "Research Results",
-        });
+        const textArtifactDef = artifactDefinitions.find(
+          (def) => def.kind === "text"
+        );
+        if (textArtifactDef) {
+          const newArtifact: UIArtifact = {
+            title: "Research Results",
+            documentId: crypto.randomUUID(),
+            kind: "text",
+            content,
+            isVisible: true,
+            status: "idle",
+            boundingBox: {
+              top: 0,
+              left: 0,
+              width: 400,
+              height: 600,
+            },
+          };
+          setArtifact(newArtifact);
+        }
       }
     }
   }, [content, isStreaming, setArtifact]);

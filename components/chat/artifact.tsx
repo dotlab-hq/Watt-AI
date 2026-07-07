@@ -203,7 +203,7 @@ function PureArtifact({
         { revalidate: false }
       );
     },
-    [artifact, mutate]
+    [artifact, mutate, chatId]
   );
 
   const latestContentRef = useRef<string>("");
