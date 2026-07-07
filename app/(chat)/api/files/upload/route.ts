@@ -37,15 +37,18 @@ async function uploadToProviders(params: {
 
   const results = await Promise.allSettled(
     providers.map(async ({ name, api }) => {
-      const result = await uploadFile({
+      const uploadParams: Parameters<typeof uploadFile>[0] = {
         api,
         data,
         filename,
         mediaType,
-        providerOptions: {
-          [name]: name === "openai" ? { purpose: "assistants" } : undefined,
-        },
-      });
+      };
+      if (name === "openai") {
+        uploadParams.providerOptions = {
+          openai: { purpose: "assistants" },
+        };
+      }
+      const result = await uploadFile(uploadParams);
       return [name, result.providerReference] as const;
     })
   );

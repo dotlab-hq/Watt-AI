@@ -359,8 +359,7 @@ function PureMultimodalInput({
         const successfullyUploadedAttachments = uploadedAttachments.filter(
           (attachment) =>
             attachment !== undefined &&
-            (attachment.url !== undefined ||
-              attachment.providerReference !== undefined) &&
+            attachment.providerReference !== undefined &&
             attachment.contentType !== undefined
         );
 

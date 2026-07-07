@@ -6,6 +6,7 @@ import {
   generateId,
   isStepCount,
   toUIMessageStream,
+  type UIMessage,
 } from "ai";
 import { checkBotId } from "botid/server";
 import { eq } from "drizzle-orm";
@@ -215,7 +216,9 @@ export async function POST(request: Request) {
         visibility: selectedVisibilityType,
         projectId,
       });
-      titlePromise = generateTitleFromUserMessage({ message });
+      titlePromise = generateTitleFromUserMessage({
+        message: message as UIMessage,
+      });
     }
 
     let uiMessages: ChatMessage[];
