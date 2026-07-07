@@ -390,8 +390,9 @@ const PurePreviewMessage = ({
       return null;
     }
 
-    if (type === "tool-httpRequest") {
-      const { toolCallId, state } = part;
+    if ((type === "tool-randomApi" || type === "dynamic-tool") &&
+        (part as any).toolName === "httpRequest") {
+      const { toolCallId, state } = part as any;
 
       if (state === "output-available" && part.output) {
         return <RandomApi result={part.output} key={toolCallId} />;
