@@ -52,8 +52,7 @@ export {
   getProjectById,
   getProjectsByUserId,
   updateProject,
-} from "./projects";
-// ─── Skills ─────────────────────────────────────────────────────────────────
+} from "./projects"; // ─── Uploaded Assets ────────────────────────────────────────────────────────
 export {
   createSkill,
   deleteSkillById,
@@ -76,6 +75,11 @@ export {
   getSuggestionsByDocumentId,
   saveSuggestions,
 } from "./suggestions";
+export {
+  getUploadedAssetById,
+  getUploadedAssetsByChatId,
+  saveUploadedAsset,
+} from "./uploaded-assets"; // ─── Skills ─────────────────────────────────────────────────────────────────
 export {
   createGuestUser,
   createUser,

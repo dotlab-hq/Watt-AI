@@ -9,7 +9,7 @@ const filePartSchema = z.object({
   type: z.enum(["file"]),
   mediaType: z.string().min(1),
   name: z.string().min(1).max(100),
-  url: z.string().url().optional(),
+  url: z.union([z.string().url(), z.literal("")]).optional(),
   providerReference: z.record(z.string()).optional(),
 });
 

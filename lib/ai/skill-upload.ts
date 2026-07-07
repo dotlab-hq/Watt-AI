@@ -48,6 +48,9 @@ export async function uploadSkillToProviders(
 
   // Upload to Anthropic if configured
   if (hasAnthropicKey) {
+    console.log(
+      `[skill-upload] Uploading skill "${displayTitle}" to Anthropic...`
+    );
     try {
       const result = await uploadSkill({
         api: anthropic,
@@ -55,16 +58,28 @@ export async function uploadSkillToProviders(
         displayTitle,
       });
       if (result.providerReference) {
+        console.log(
+          "[skill-upload] Anthropic upload succeeded:",
+          result.providerReference
+        );
         Object.assign(mergedRef, result.providerReference);
+      } else {
+        console.warn(
+          "[skill-upload] Anthropic upload returned no provider reference"
+        );
       }
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
+      console.error(`[skill-upload] Anthropic upload failed: ${msg}`);
       errors.push(`Anthropic: ${msg}`);
     }
   }
 
   // Upload to OpenAI if configured
   if (hasOpenAIKey) {
+    console.log(
+      `[skill-upload] Uploading skill "${displayTitle}" to OpenAI...`
+    );
     try {
       const result = await uploadSkill({
         api: openai,
@@ -75,10 +90,19 @@ export async function uploadSkillToProviders(
         },
       });
       if (result.providerReference) {
+        console.log(
+          "[skill-upload] OpenAI upload succeeded:",
+          result.providerReference
+        );
         Object.assign(mergedRef, result.providerReference);
+      } else {
+        console.warn(
+          "[skill-upload] OpenAI upload returned no provider reference"
+        );
       }
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
+      console.error(`[skill-upload] OpenAI upload failed: ${msg}`);
       errors.push(`OpenAI: ${msg}`);
     }
   }

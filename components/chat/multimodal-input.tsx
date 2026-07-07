@@ -235,7 +235,7 @@ function PureMultimodalInput({
       parts: [
         ...attachments.map((attachment) => ({
           type: "file" as const,
-          url: attachment.url ?? "",
+          url: attachment.url || "",
           name: attachment.name,
           mediaType: attachment.contentType,
           ...(attachment.providerReference
@@ -267,35 +267,42 @@ function PureMultimodalInput({
     chatId,
   ]);
 
-  const uploadFile = useCallback(async (file: File) => {
-    const formData = new FormData();
-    formData.append("file", file);
-
-    try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/api/files/upload`,
-        {
-          method: "POST",
-          body: formData,
-        }
-      );
-
-      if (response.ok) {
-        const data = await response.json();
-        const { providerReference, mediaType, filename } = data;
-
-        return {
-          name: filename,
-          contentType: mediaType,
-          providerReference,
-        };
+  const uploadFile = useCallback(
+    async (file: File) => {
+      const formData = new FormData();
+      formData.append("file", file);
+      if (chatId) {
+        formData.append("chatId", chatId);
       }
-      const { error } = await response.json();
-      toast.error(error);
-    } catch (_error) {
-      toast.error("Failed to upload file, please try again!");
-    }
-  }, []);
+
+      try {
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/api/files/upload`,
+          {
+            method: "POST",
+            body: formData,
+          }
+        );
+
+        if (response.ok) {
+          const data = await response.json();
+          const { providerReference, mediaType, filename, s3Url } = data;
+
+          return {
+            name: filename,
+            contentType: mediaType,
+            url: s3Url || "",
+            providerReference,
+          };
+        }
+        const { error } = await response.json();
+        toast.error(error);
+      } catch (_error) {
+        toast.error("Failed to upload file, please try again!");
+      }
+    },
+    [chatId]
+  );
 
   const handleFileChange = useCallback(
     async (event: ChangeEvent<HTMLInputElement>) => {

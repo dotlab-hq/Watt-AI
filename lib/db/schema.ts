@@ -110,6 +110,24 @@ export const document = chatbot.table(
 
 export type Document = InferSelectModel<typeof document>;
 
+export const uploadedAsset = chatbot.table("UploadedAsset", {
+  id: uuid("id").notNull().defaultRandom(),
+  userId: text("userId")
+    .notNull()
+    .references(() => user.id),
+  chatId: uuid("chatId").references(() => chat.id, {
+    onDelete: "set null",
+  }),
+  s3Key: text("s3Key").notNull(),
+  s3Url: text("s3Url").notNull(),
+  filename: text("filename").notNull(),
+  mediaType: text("mediaType").notNull(),
+  providerReference: json("providerReference"),
+  createdAt: timestamp("createdAt").notNull(),
+});
+
+export type UploadedAsset = InferSelectModel<typeof uploadedAsset>;
+
 export const suggestion = chatbot.table(
   "Suggestion",
   {

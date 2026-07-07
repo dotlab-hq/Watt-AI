@@ -5,6 +5,8 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 
 import { auth } from "@/app/(auth)/auth";
+import { saveUploadedAsset } from "@/lib/db/queries/uploaded-assets";
+import { uploadToS3 } from "@/lib/s3";
 
 const FileSchema = z.object({
   file: z.instanceof(Blob).refine((file) => file.size <= 50 * 1024 * 1024, {
@@ -48,7 +50,12 @@ async function uploadToProviders(params: {
           openai: { purpose: "assistants" },
         };
       }
+      console.log(`[file-upload] Uploading "${filename}" to ${name}...`);
       const result = await uploadFile(uploadParams);
+      console.log(
+        `[file-upload] ${name} upload succeeded:`,
+        result.providerReference
+      );
       return [name, result.providerReference] as const;
     })
   );
@@ -81,6 +88,7 @@ export async function POST(request: Request) {
   try {
     const formData = await request.formData();
     const file = formData.get("file") as Blob;
+    const chatId = formData.get("chatId") as string | null;
 
     if (!file) {
       return NextResponse.json({ error: "No file uploaded" }, { status: 400 });
@@ -100,13 +108,23 @@ export async function POST(request: Request) {
     const mediaType =
       (formData.get("file") as File).type || "application/octet-stream";
     const fileBuffer = await file.arrayBuffer();
+    const data = new Uint8Array(fileBuffer);
 
     try {
-      const providerReference = await uploadToProviders({
-        data: new Uint8Array(fileBuffer),
-        filename,
-        mediaType,
-      });
+      // Upload to AI providers in parallel with S3 upload
+      const [providerReference, s3Result] = await Promise.all([
+        uploadToProviders({ data, filename, mediaType }),
+        uploadToS3({
+          userId: session.user.id,
+          chatId: chatId || "unknown",
+          filename,
+          mediaType,
+          data,
+        }).catch((err) => {
+          console.warn("[file-upload] S3 upload failed (non-fatal):", err);
+          return null;
+        }),
+      ]);
 
       if (Object.keys(providerReference).length === 0) {
         return NextResponse.json(
@@ -115,12 +133,44 @@ export async function POST(request: Request) {
         );
       }
 
+      // Save the asset mapping to DB for visual display
+      let s3Url: string | null = null;
+      if (s3Result) {
+        try {
+          await saveUploadedAsset({
+            userId: session.user.id,
+            chatId: chatId || null,
+            s3Key: s3Result.s3Key,
+            s3Url: s3Result.s3Url,
+            filename,
+            mediaType,
+            providerReference,
+          });
+          s3Url = s3Result.s3Url;
+          console.log(
+            `[file-upload] Saved asset mapping to DB, s3Url: ${s3Url}`
+          );
+        } catch (err) {
+          console.warn(
+            "[file-upload] Failed to save asset mapping (non-fatal):",
+            err
+          );
+          // Still return the S3 URL even if DB save fails
+          s3Url = s3Result.s3Url;
+        }
+      }
+
       console.log(
         `File uploaded to providers: ${Object.keys(providerReference).join(", ")} —`,
         filename
       );
 
-      return NextResponse.json({ providerReference, mediaType, filename });
+      return NextResponse.json({
+        providerReference,
+        mediaType,
+        filename,
+        s3Url,
+      });
     } catch (_error) {
       console.log("Provider upload error:", _error);
       return NextResponse.json({ error: "Upload failed" }, { status: 500 });
