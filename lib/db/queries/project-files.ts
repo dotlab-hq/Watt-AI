@@ -61,7 +61,8 @@ export async function updateProjectFile({
   try {
     const updates: Record<string, unknown> = {};
     if (openaiFileId !== undefined) updates.openaiFileId = openaiFileId;
-    if (vectorStoreFileId !== undefined) updates.vectorStoreFileId = vectorStoreFileId;
+    if (vectorStoreFileId !== undefined)
+      updates.vectorStoreFileId = vectorStoreFileId;
     if (status !== undefined) updates.status = status;
     await db.update(projectFile).set(updates).where(eq(projectFile.id, id));
   } catch (_error) {

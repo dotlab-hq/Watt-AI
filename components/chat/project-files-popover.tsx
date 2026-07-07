@@ -1,10 +1,9 @@
 "use client";
 
-import { FileIcon, FileTextIcon, MoreHorizontalIcon } from "lucide-react";
+import { FileTextIcon } from "lucide-react";
 import { useState } from "react";
 import useSWR from "swr";
 import { LoaderIcon } from "@/components/chat/icons";
-import { Button } from "@/components/ui/button";
 import {
   Popover,
   PopoverContent,
@@ -55,13 +54,13 @@ export function ProjectFilesPopover({
   const files = data?.files ?? [];
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover onOpenChange={setOpen} open={open}>
       <PopoverTrigger asChild>{children}</PopoverTrigger>
       <PopoverContent
         align="end"
+        className="w-64 p-0"
         side="right"
         sideOffset={8}
-        className="w-64 p-0"
       >
         <div className="px-3 py-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
           Project Files
@@ -82,8 +81,8 @@ export function ProjectFilesPopover({
           <div className="max-h-48 overflow-y-auto">
             {files.map((file) => (
               <div
-                key={file.id}
                 className="flex items-center gap-2 px-3 py-1.5 text-[12px] hover:bg-accent/50"
+                key={file.id}
               >
                 <FileTextIcon className="size-3.5 shrink-0 text-muted-foreground" />
                 <span className="min-w-0 flex-1 truncate">{file.fileName}</span>

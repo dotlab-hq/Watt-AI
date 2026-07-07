@@ -17,7 +17,8 @@ export const svgDocumentHandler = createDocumentHandler<"svg">({
 
     const { stream } = streamText({
       model: getLanguageModel(modelId),
-      instructions: `You are an SVG generator. Output ONLY the raw SVG markup. No explanations, no markdown fences, no wrapping. The output must start with <svg and end with </svg>. Use viewBox for responsive sizing.`,
+      instructions:
+        "You are an SVG generator. Output ONLY the raw SVG markup. No explanations, no markdown fences, no wrapping. The output must start with <svg and end with </svg>. Use viewBox for responsive sizing.",
       prompt: title,
     });
 

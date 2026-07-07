@@ -34,15 +34,24 @@ export async function POST(request: Request) {
   };
 
   if (!name?.trim()) {
-    return new ChatbotError("bad_request:api", "Server name is required").toResponse();
+    return new ChatbotError(
+      "bad_request:api",
+      "Server name is required"
+    ).toResponse();
   }
 
   if (transport === "stdio" && !command?.trim()) {
-    return new ChatbotError("bad_request:api", "Command is required for stdio transport").toResponse();
+    return new ChatbotError(
+      "bad_request:api",
+      "Command is required for stdio transport"
+    ).toResponse();
   }
 
   if (transport !== "stdio" && !url?.trim()) {
-    return new ChatbotError("bad_request:api", "URL is required for HTTP/SSE transport").toResponse();
+    return new ChatbotError(
+      "bad_request:api",
+      "URL is required for HTTP/SSE transport"
+    ).toResponse();
   }
 
   const server = await createMcpServer({
@@ -76,7 +85,10 @@ export async function PATCH(request: Request) {
   };
 
   if (!id) {
-    return new ChatbotError("bad_request:api", "Server ID is required").toResponse();
+    return new ChatbotError(
+      "bad_request:api",
+      "Server ID is required"
+    ).toResponse();
   }
 
   const updated = await updateMcpServer({
@@ -102,7 +114,10 @@ export async function DELETE(request: Request) {
   const id = searchParams.get("id");
 
   if (!id) {
-    return new ChatbotError("bad_request:api", "Server ID is required").toResponse();
+    return new ChatbotError(
+      "bad_request:api",
+      "Server ID is required"
+    ).toResponse();
   }
 
   await deleteMcpServerById({ id });

@@ -1,6 +1,6 @@
 import equal from "fast-deep-equal";
-import { memo, useCallback, useRef, useState } from "react";
 import { Volume2Icon } from "lucide-react";
+import { memo, useCallback, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useSWRConfig } from "swr";
 import { useCopyToClipboard } from "usehooks-ts";
@@ -174,7 +174,11 @@ export function PureMessageActions({
       </Action>
 
       <Action
-        className={playingId === message.id ? "size-7 rounded-md bg-foreground text-background" : "text-muted-foreground/50 hover:text-foreground"}
+        className={
+          playingId === message.id
+            ? "size-7 rounded-md bg-foreground text-background"
+            : "text-muted-foreground/50 hover:text-foreground"
+        }
         disabled={loadingId === message.id}
         onClick={handleToggleSpeech}
         tooltip={playingId === message.id ? "Stop" : "Read Aloud"}

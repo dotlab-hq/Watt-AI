@@ -21,10 +21,21 @@ function apply() {
   const sp = localStorage.getItem(KEYS.spacing) || "compact";
   const av = localStorage.getItem(KEYS.showAvatars) === "1";
 
-  root.classList.remove("theme-modern", "theme-company", "font-sora", "font-onest", "font-reddit-mono");
+  root.classList.remove(
+    "theme-modern",
+    "theme-company",
+    "font-sora",
+    "font-onest",
+    "font-reddit-mono"
+  );
   root.classList.add(`theme-${t}`, `font-${f}`);
 
-  w.classList.remove("text-size-s", "text-size-m", "text-size-l", "text-size-xl");
+  w.classList.remove(
+    "text-size-s",
+    "text-size-m",
+    "text-size-l",
+    "text-size-xl"
+  );
   w.classList.add(`text-size-${fs}`);
 
   w.classList.remove("spacing-compact", "spacing-cozy", "spacing-roomy");
@@ -36,7 +47,7 @@ function apply() {
 export function PersonalizationApplier() {
   useEffect(() => {
     fetch("/api/user/personalization")
-      .then((r) => r.ok ? r.json() : null)
+      .then((r) => (r.ok ? r.json() : null))
       .then((data: { settings?: Record<string, string | boolean> } | null) => {
         if (!data?.settings) return;
         const s = data.settings;
@@ -44,7 +55,8 @@ export function PersonalizationApplier() {
         if (s.font) localStorage.setItem(KEYS.font, String(s.font));
         if (s.fontSize) localStorage.setItem(KEYS.fontSize, String(s.fontSize));
         if (s.spacing) localStorage.setItem(KEYS.spacing, String(s.spacing));
-        if (s.showAvatars !== undefined) localStorage.setItem(KEYS.showAvatars, s.showAvatars ? "1" : "0");
+        if (s.showAvatars !== undefined)
+          localStorage.setItem(KEYS.showAvatars, s.showAvatars ? "1" : "0");
         apply();
       })
       .catch(() => {});

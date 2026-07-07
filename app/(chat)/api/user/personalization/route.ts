@@ -104,21 +104,26 @@ export async function PATCH(request: Request) {
     if (body.font !== undefined) updateData.font = body.font;
     if (body.fontSize !== undefined) updateData.fontSize = body.fontSize;
     if (body.spacing !== undefined) updateData.spacing = body.spacing;
-    if (body.showAvatars !== undefined) updateData.showAvatars = body.showAvatars;
+    if (body.showAvatars !== undefined)
+      updateData.showAvatars = body.showAvatars;
     if (body.baseStyle !== undefined) updateData.baseStyle = body.baseStyle;
     if (body.warm !== undefined) updateData.warm = body.warm;
-    if (body.enthusiastic !== undefined) updateData.enthusiastic = body.enthusiastic;
-    if (body.headersAndLists !== undefined) updateData.headersAndLists = body.headersAndLists;
+    if (body.enthusiastic !== undefined)
+      updateData.enthusiastic = body.enthusiastic;
+    if (body.headersAndLists !== undefined)
+      updateData.headersAndLists = body.headersAndLists;
     if (body.emoji !== undefined) updateData.emoji = body.emoji;
-    if (body.customInstructions !== undefined) updateData.customInstructions = body.customInstructions;
+    if (body.customInstructions !== undefined)
+      updateData.customInstructions = body.customInstructions;
     if (body.nickname !== undefined) updateData.nickname = body.nickname;
     if (body.occupation !== undefined) updateData.occupation = body.occupation;
-    if (body.moreAboutYou !== undefined) updateData.moreAboutYou = body.moreAboutYou;
+    if (body.moreAboutYou !== undefined)
+      updateData.moreAboutYou = body.moreAboutYou;
 
     if (Object.keys(updateData).length === 0) {
       return NextResponse.json(
         { error: "No fields to update" },
-        { status: 400 },
+        { status: 400 }
       );
     }
 
@@ -145,7 +150,7 @@ export async function PATCH(request: Request) {
     console.error("Failed to save personalization:", error);
     return NextResponse.json(
       { error: "Failed to save settings" },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }
@@ -166,7 +171,7 @@ export async function DELETE() {
     console.error("Failed to reset personalization:", error);
     return NextResponse.json(
       { error: "Failed to reset settings" },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }

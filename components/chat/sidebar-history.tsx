@@ -1,8 +1,8 @@
 "use client";
 
 import { isToday, isYesterday, subMonths, subWeeks } from "date-fns";
-import { PinIcon } from "lucide-react";
 import { motion } from "framer-motion";
+import { PinIcon } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -120,10 +120,14 @@ export function SidebarHistory({ user }: { user: User | undefined }) {
   const pinnedKey = user
     ? `${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/api/history?limit=50&pinned=true`
     : null;
-  const { data: pinnedData, mutate: pinnedMutate } = useSWR<{ chats: Chat[] }>(pinnedKey, fetcher, {
-    fallbackData: { chats: [] },
-    revalidateOnFocus: false,
-  });
+  const { data: pinnedData, mutate: pinnedMutate } = useSWR<{ chats: Chat[] }>(
+    pinnedKey,
+    fetcher,
+    {
+      fallbackData: { chats: [] },
+      revalidateOnFocus: false,
+    }
+  );
   const pinnedChats = pinnedData?.chats ?? [];
 
   const router = useRouter();

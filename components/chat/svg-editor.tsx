@@ -1,7 +1,13 @@
 "use client";
 
+import {
+  CodeIcon,
+  FileIcon,
+  MaximizeIcon,
+  MinimizeIcon,
+  PlayIcon,
+} from "lucide-react";
 import { useState } from "react";
-import { CodeIcon, PlayIcon, MaximizeIcon, MinimizeIcon, FileIcon } from "lucide-react";
 import { CodeBlockContent } from "@/components/ai-elements/code-block";
 import { LoaderIcon } from "@/components/chat/icons";
 import { cn } from "@/lib/utils";
@@ -36,7 +42,12 @@ export function SvgEditor({
   }
 
   return (
-    <div className={cn("flex flex-col", isFullscreen && "fixed inset-0 z-50 bg-background")}>
+    <div
+      className={cn(
+        "flex flex-col",
+        isFullscreen && "fixed inset-0 z-50 bg-background"
+      )}
+    >
       {/* Header bar */}
       <div className="flex items-center justify-between border-b border-border/50 px-4 py-2">
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -76,7 +87,11 @@ export function SvgEditor({
             title={isFullscreen ? "Exit fullscreen" : "Fullscreen"}
             type="button"
           >
-            {isFullscreen ? <MinimizeIcon size={14} /> : <MaximizeIcon size={14} />}
+            {isFullscreen ? (
+              <MinimizeIcon size={14} />
+            ) : (
+              <MaximizeIcon size={14} />
+            )}
           </button>
         </div>
       </div>

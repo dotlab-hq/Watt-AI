@@ -57,11 +57,7 @@ function extractChatId(pathname: string): string | null {
   return match ? match[1] : null;
 }
 
-export function ActiveChatProvider({
-  children,
-}: {
-  children: ReactNode;
-}) {
+export function ActiveChatProvider({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const { setDataStream } = useDataStream();
   const { mutate } = useSWRConfig();
@@ -175,7 +171,9 @@ export function ActiveChatProvider({
               : { message: lastMessage }),
             selectedChatModel: currentModelIdRef.current,
             selectedVisibilityType: visibility,
-            ...(projectIdRef.current ? { projectId: projectIdRef.current } : {}),
+            ...(projectIdRef.current
+              ? { projectId: projectIdRef.current }
+              : {}),
           },
         };
       },

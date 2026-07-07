@@ -1,5 +1,5 @@
-import { auth, betterAuthInstance } from "@/app/(auth)/auth";
 import { headers } from "next/headers";
+import { auth, betterAuthInstance } from "@/app/(auth)/auth";
 
 export async function GET() {
   const session = await auth();
@@ -12,13 +12,10 @@ export async function GET() {
 
   try {
     const response = await betterAuthInstance.handler(
-      new Request(
-        `${betterAuthInstance.options.baseURL}/sso/providers`,
-        {
-          method: "GET",
-          headers: Object.fromEntries(h.entries()),
-        },
-      ),
+      new Request(`${betterAuthInstance.options.baseURL}/sso/providers`, {
+        method: "GET",
+        headers: Object.fromEntries(h.entries()),
+      })
     );
     return response;
   } catch {
@@ -37,17 +34,14 @@ export async function POST(request: Request) {
   const h = await headers();
 
   const response = await betterAuthInstance.handler(
-    new Request(
-      `${betterAuthInstance.options.baseURL}/sso/register`,
-      {
-        method: "POST",
-        headers: {
-          ...Object.fromEntries(h.entries()),
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(body),
+    new Request(`${betterAuthInstance.options.baseURL}/sso/register`, {
+      method: "POST",
+      headers: {
+        ...Object.fromEntries(h.entries()),
+        "Content-Type": "application/json",
       },
-    ),
+      body: JSON.stringify(body),
+    })
   );
 
   return response;

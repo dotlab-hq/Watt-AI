@@ -9,7 +9,14 @@ import { Textarea } from "@/components/ui/textarea";
 // ─── Types ──────────────────────────────────────────────────────────────────
 
 type AiSettings = {
-  baseStyle: "default" | "professional" | "friendly" | "candid" | "quirky" | "efficient" | "cynical";
+  baseStyle:
+    | "default"
+    | "professional"
+    | "friendly"
+    | "candid"
+    | "quirky"
+    | "efficient"
+    | "cynical";
   warm: "default" | "more" | "less";
   enthusiastic: "default" | "more" | "less";
   headersAndLists: "default" | "more" | "less";
@@ -34,7 +41,11 @@ const DEFAULTS: AiSettings = {
 
 const BASE_STYLES = [
   { value: "default", label: "Default", description: "Balanced and natural" },
-  { value: "professional", label: "Professional", description: "Polished and precise" },
+  {
+    value: "professional",
+    label: "Professional",
+    description: "Polished and precise",
+  },
   { value: "friendly", label: "Friendly", description: "Warm and chatty" },
   { value: "candid", label: "Candid", description: "Direct and encouraging" },
   { value: "quirky", label: "Quirky", description: "Playful and imaginative" },
@@ -43,16 +54,40 @@ const BASE_STYLES = [
 ] as const;
 
 const CHARACTERISTICS = [
-  { key: "warm" as const, label: "Warm", description: "Friendliness and empathy in responses" },
-  { key: "enthusiastic" as const, label: "Enthusiastic", description: "Energy and excitement" },
-  { key: "headersAndLists" as const, label: "Headers & Lists", description: "Structured formatting" },
-  { key: "emoji" as const, label: "Emoji", description: "Emoji usage in responses" },
+  {
+    key: "warm" as const,
+    label: "Warm",
+    description: "Friendliness and empathy in responses",
+  },
+  {
+    key: "enthusiastic" as const,
+    label: "Enthusiastic",
+    description: "Energy and excitement",
+  },
+  {
+    key: "headersAndLists" as const,
+    label: "Headers & Lists",
+    description: "Structured formatting",
+  },
+  {
+    key: "emoji" as const,
+    label: "Emoji",
+    description: "Emoji usage in responses",
+  },
 ] as const;
 
 const LEVEL_OPTIONS = [
-  { value: "more", label: "More", description: "Friendlier and more personable" },
+  {
+    value: "more",
+    label: "More",
+    description: "Friendlier and more personable",
+  },
   { value: "default", label: "Default", description: "" },
-  { value: "less", label: "Less", description: "More professional and factual" },
+  {
+    value: "less",
+    label: "Less",
+    description: "More professional and factual",
+  },
 ] as const;
 
 // ─── API helpers ────────────────────────────────────────────────────────────
@@ -62,10 +97,16 @@ async function fetchAiSettings(): Promise<AiSettings> {
   if (!r.ok) return DEFAULTS;
   const data = (await r.json()) as { settings: Record<string, string> };
   return {
-    baseStyle: (data.settings.baseStyle as AiSettings["baseStyle"]) || DEFAULTS.baseStyle,
+    baseStyle:
+      (data.settings.baseStyle as AiSettings["baseStyle"]) ||
+      DEFAULTS.baseStyle,
     warm: (data.settings.warm as AiSettings["warm"]) || DEFAULTS.warm,
-    enthusiastic: (data.settings.enthusiastic as AiSettings["enthusiastic"]) || DEFAULTS.enthusiastic,
-    headersAndLists: (data.settings.headersAndLists as AiSettings["headersAndLists"]) || DEFAULTS.headersAndLists,
+    enthusiastic:
+      (data.settings.enthusiastic as AiSettings["enthusiastic"]) ||
+      DEFAULTS.enthusiastic,
+    headersAndLists:
+      (data.settings.headersAndLists as AiSettings["headersAndLists"]) ||
+      DEFAULTS.headersAndLists,
     emoji: (data.settings.emoji as AiSettings["emoji"]) || DEFAULTS.emoji,
     customInstructions: data.settings.customInstructions || "",
     nickname: data.settings.nickname || "",
@@ -98,7 +139,9 @@ export function PersonalizationTab() {
       setSettings(s);
       setLoaded(true);
     });
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const scheduleSave = useCallback((next: AiSettings) => {
@@ -117,7 +160,7 @@ export function PersonalizationTab() {
         return next;
       });
     },
-    [scheduleSave],
+    [scheduleSave]
   );
 
   const handleSaveNow = useCallback(async () => {
@@ -146,7 +189,9 @@ export function PersonalizationTab() {
       {/* ── Base Style & Tone ── */}
       <section className="rounded-lg border border-border/50 bg-card p-3 space-y-3">
         <div>
-          <h3 className="text-xs font-medium text-foreground">Base style and tone</h3>
+          <h3 className="text-xs font-medium text-foreground">
+            Base style and tone
+          </h3>
           <p className="text-[11px] text-muted-foreground mt-0.5">
             Set the style and tone of how Watt AI responds to you.
           </p>
@@ -154,7 +199,9 @@ export function PersonalizationTab() {
         <div className="relative">
           <select
             className="w-full h-9 rounded-lg border border-border/50 bg-input/30 px-3 py-1 text-sm outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 cursor-pointer appearance-none"
-            onChange={(e) => update("baseStyle", e.target.value as AiSettings["baseStyle"])}
+            onChange={(e) =>
+              update("baseStyle", e.target.value as AiSettings["baseStyle"])
+            }
             value={settings.baseStyle}
           >
             {BASE_STYLES.map((s) => (
@@ -164,8 +211,18 @@ export function PersonalizationTab() {
             ))}
           </select>
           <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
-            <svg className="size-3 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+            <svg
+              className="size-3 text-muted-foreground"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={2}
+              viewBox="0 0 24 24"
+            >
+              <path
+                d="M19 9l-7 7-7-7"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
             </svg>
           </div>
         </div>
@@ -174,7 +231,9 @@ export function PersonalizationTab() {
       {/* ── Characteristics ── */}
       <section className="rounded-lg border border-border/50 bg-card p-3 space-y-3">
         <div>
-          <h3 className="text-xs font-medium text-foreground">Characteristics</h3>
+          <h3 className="text-xs font-medium text-foreground">
+            Characteristics
+          </h3>
           <p className="text-[11px] text-muted-foreground mt-0.5">
             Fine-tune additional customizations on top of your base style.
           </p>
@@ -182,10 +241,14 @@ export function PersonalizationTab() {
 
         {CHARACTERISTICS.map((c) => (
           <div className="flex items-center justify-between" key={c.key}>
-            <span className="text-xs font-medium text-muted-foreground">{c.label}</span>
+            <span className="text-xs font-medium text-muted-foreground">
+              {c.label}
+            </span>
             <select
               className="h-8 w-[140px] rounded-lg border border-border/50 bg-input/30 px-2 py-1 text-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 cursor-pointer appearance-none"
-              onChange={(e) => update(c.key, e.target.value as AiSettings[typeof c.key])}
+              onChange={(e) =>
+                update(c.key, e.target.value as AiSettings[typeof c.key])
+              }
               value={settings[c.key]}
             >
               {LEVEL_OPTIONS.map((o) => (
@@ -201,7 +264,9 @@ export function PersonalizationTab() {
       {/* ── Custom Instructions ── */}
       <section className="rounded-lg border border-border/50 bg-card p-3 space-y-2">
         <div>
-          <h3 className="text-xs font-medium text-foreground">Custom instructions</h3>
+          <h3 className="text-xs font-medium text-foreground">
+            Custom instructions
+          </h3>
           <p className="text-[11px] text-muted-foreground mt-0.5">
             Tell Watt AI how you want it to behave in every conversation.
           </p>
@@ -223,7 +288,10 @@ export function PersonalizationTab() {
           </p>
         </div>
         <div className="space-y-2">
-          <label className="text-[11px] font-medium text-muted-foreground" htmlFor="pn-nickname">
+          <label
+            className="text-[11px] font-medium text-muted-foreground"
+            htmlFor="pn-nickname"
+          >
             Nickname
           </label>
           <input
@@ -235,7 +303,10 @@ export function PersonalizationTab() {
           />
         </div>
         <div className="space-y-2">
-          <label className="text-[11px] font-medium text-muted-foreground" htmlFor="pn-occupation">
+          <label
+            className="text-[11px] font-medium text-muted-foreground"
+            htmlFor="pn-occupation"
+          >
             Occupation
           </label>
           <input
@@ -251,7 +322,9 @@ export function PersonalizationTab() {
       {/* ── More About You ── */}
       <section className="rounded-lg border border-border/50 bg-card p-3 space-y-2">
         <div>
-          <h3 className="text-xs font-medium text-foreground">More about you</h3>
+          <h3 className="text-xs font-medium text-foreground">
+            More about you
+          </h3>
           <p className="text-[11px] text-muted-foreground mt-0.5">
             Anything else Watt AI should know to give you better responses.
           </p>

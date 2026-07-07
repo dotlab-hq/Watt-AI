@@ -2,9 +2,9 @@ import { and, desc, eq, gt, isNull, lt, type SQL } from "drizzle-orm";
 import type { NextRequest } from "next/server";
 import { auth } from "@/app/(auth)/auth";
 import { deleteAllChatsByUserId } from "@/lib/db/queries";
-import { chat, type Chat } from "@/lib/db/schema";
-import { ChatbotError } from "@/lib/errors";
 import { db } from "@/lib/db/queries/db";
+import { type Chat, chat } from "@/lib/db/schema";
+import { ChatbotError } from "@/lib/errors";
 
 export async function GET(request: NextRequest) {
   const { searchParams } = request.nextUrl;
@@ -32,10 +32,7 @@ export async function GET(request: NextRequest) {
 
   // pinnedOnly → only pinned; otherwise → non-pinned, non-project chats
   const baseCondition = pinnedOnly
-    ? and(
-        eq(chat.userId, session.user.id),
-        eq(chat.isPinned, true)
-      )
+    ? and(eq(chat.userId, session.user.id), eq(chat.isPinned, true))
     : and(
         eq(chat.userId, session.user.id),
         eq(chat.isPinned, false),
@@ -49,9 +46,7 @@ export async function GET(request: NextRequest) {
       .select()
       .from(chat)
       .where(
-        whereCondition
-          ? and(whereCondition, baseCondition)
-          : baseCondition
+        whereCondition ? and(whereCondition, baseCondition) : baseCondition
       )
       .orderBy(desc(chat.createdAt))
       .limit(extendedLimit);
@@ -65,10 +60,7 @@ export async function GET(request: NextRequest) {
       .where(eq(chat.id, startingAfter))
       .limit(1);
     if (!selectedChat) {
-      return new ChatbotError(
-        "not_found:api",
-        "Chat not found"
-      ).toResponse();
+      return new ChatbotError("not_found:api", "Chat not found").toResponse();
     }
     filteredChats = await queryFn(gt(chat.createdAt, selectedChat.createdAt));
   } else if (endingBefore) {
@@ -78,10 +70,7 @@ export async function GET(request: NextRequest) {
       .where(eq(chat.id, endingBefore))
       .limit(1);
     if (!selectedChat) {
-      return new ChatbotError(
-        "not_found:api",
-        "Chat not found"
-      ).toResponse();
+      return new ChatbotError("not_found:api", "Chat not found").toResponse();
     }
     filteredChats = await queryFn(lt(chat.createdAt, selectedChat.createdAt));
   } else {

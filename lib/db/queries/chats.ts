@@ -1,4 +1,4 @@
-import { and, desc, eq, gt, inArray, isNull, lt, type SQL } from "drizzle-orm";
+import { and, desc, eq, gt, inArray, lt, type SQL } from "drizzle-orm";
 import type { VisibilityType } from "@/components/chat/visibility-selector";
 import { type Chat, chat, message, stream, vote } from "@/lib/db/schema";
 import { ChatbotError } from "@/lib/errors";
@@ -180,10 +180,7 @@ export async function getChatsByProjectId({
         .from(chat)
         .where(
           whereCondition
-            ? and(
-                whereCondition,
-                eq(chat.projectId, projectId)
-              )
+            ? and(whereCondition, eq(chat.projectId, projectId))
             : eq(chat.projectId, projectId)
         )
         .orderBy(desc(chat.createdAt))
@@ -265,10 +262,7 @@ export async function toggleChatPin({
 
     return newPinned;
   } catch (_error) {
-    throw new ChatbotError(
-      "bad_request:database",
-      "Failed to toggle chat pin"
-    );
+    throw new ChatbotError("bad_request:database", "Failed to toggle chat pin");
   }
 }
 

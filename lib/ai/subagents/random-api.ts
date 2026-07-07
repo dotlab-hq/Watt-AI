@@ -1,5 +1,5 @@
-import { ToolLoopAgent } from "ai";
 import type { InferAgentUIMessage } from "ai";
+import { ToolLoopAgent } from "ai";
 import { getLanguageModel } from "@/lib/ai/providers";
 
 /**
@@ -20,4 +20,6 @@ CRITICAL RULES:
   },
 });
 
-export type RandomApiSubagentMessage = InferAgentUIMessage<typeof randomApiSubagent>;
+export type RandomApiSubagentMessage = InferAgentUIMessage<
+  typeof randomApiSubagent
+>;

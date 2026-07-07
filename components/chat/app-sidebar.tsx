@@ -22,13 +22,13 @@ import { useSWRConfig } from "swr";
 import { unstable_serialize } from "swr/infinite";
 import type { User } from "@/app/(auth)/auth";
 import { CreateProjectDialog } from "@/components/chat/create-project-dialog";
+import { ProjectFilesDialog } from "@/components/chat/project-files-dialog";
 import { SettingsSheet } from "@/components/chat/settings-sheet";
 import {
   getChatHistoryPaginationKey,
   SidebarHistory,
 } from "@/components/chat/sidebar-history";
 import { ChatItem } from "@/components/chat/sidebar-history-item";
-import { ProjectFilesDialog } from "@/components/chat/project-files-dialog";
 import { SidebarUserNav } from "@/components/chat/sidebar-user-nav";
 import {
   AlertDialog,
@@ -40,6 +40,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
 import {
   Collapsible,
   CollapsibleContent,
@@ -59,7 +60,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import {
   Sidebar,
   SidebarContent,
@@ -87,7 +87,9 @@ export function AppSidebar({ user }: { user: User | undefined }) {
   const { mutate } = useSWRConfig();
   const [showDeleteAllDialog, setShowDeleteAllDialog] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const [settingsTab, setSettingsTab] = useState<"account" | "projects" | "mcp">("account");
+  const [settingsTab, setSettingsTab] = useState<
+    "account" | "projects" | "mcp"
+  >("account");
   const [createProjectOpen, setCreateProjectOpen] = useState(false);
   const [renameTarget, setRenameTarget] = useState<{
     id: string;
@@ -114,9 +116,7 @@ export function AppSidebar({ user }: { user: User | undefined }) {
   const [expandedProjectId, setExpandedProjectId] = useState<string | null>(
     null
   );
-  const [projectChats, setProjectChats] = useState<
-    Record<string, Chat[]>
-  >({});
+  const [projectChats, setProjectChats] = useState<Record<string, Chat[]>>({});
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploadProjectId, setUploadProjectId] = useState<string | null>(null);
@@ -207,7 +207,10 @@ export function AppSidebar({ user }: { user: User | undefined }) {
         {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ id: renameTarget.id, name: renameName.trim() }),
+          body: JSON.stringify({
+            id: renameTarget.id,
+            name: renameName.trim(),
+          }),
         }
       );
       if (!r.ok) throw new Error("Rename failed");
@@ -363,8 +366,7 @@ export function AppSidebar({ user }: { user: User | undefined }) {
                       <FolderIcon className="size-4" />
                       <span>Projects</span>
                       <span
-                        role="button"
-                        tabIndex={0}
+                        className="ml-auto mr-1 flex size-5 items-center justify-center rounded text-sidebar-foreground/60 transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground"
                         onClick={(e) => {
                           e.stopPropagation();
                           setOpenMobile(false);
@@ -377,7 +379,8 @@ export function AppSidebar({ user }: { user: User | undefined }) {
                             setCreateProjectOpen(true);
                           }
                         }}
-                        className="ml-auto mr-1 flex size-5 items-center justify-center rounded text-sidebar-foreground/60 transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground"
+                        role="button"
+                        tabIndex={0}
                       >
                         <PlusIcon className="size-3.5" />
                       </span>
@@ -388,7 +391,6 @@ export function AppSidebar({ user }: { user: User | undefined }) {
                   </CollapsibleTrigger>
                   <CollapsibleContent>
                     <div className="mt-1 space-y-0.5 group-data-[collapsible=icon]:hidden">
-
                       <div className="mt-0.5 space-y-0.5">
                         {projects.map((project) => {
                           const isExpanded = expandedProjectId === project.id;
@@ -402,8 +404,8 @@ export function AppSidebar({ user }: { user: User | undefined }) {
                                 }`}
                               >
                                 <button
-                                  onClick={() => toggleProject(project.id)}
                                   className="flex flex-1 items-center gap-2 overflow-hidden"
+                                  onClick={() => toggleProject(project.id)}
                                 >
                                   {isExpanded ? (
                                     <FolderOpenIcon className="size-3.5 shrink-0 text-sidebar-foreground/50" />
@@ -421,10 +423,15 @@ export function AppSidebar({ user }: { user: User | undefined }) {
                                       <MoreHorizontalIcon className="size-3.5" />
                                     </button>
                                   </DropdownMenuTrigger>
-                                  <DropdownMenuContent align="end" className="min-w-[150px]">
+                                  <DropdownMenuContent
+                                    align="end"
+                                    className="min-w-[150px]"
+                                  >
                                     <DropdownMenuItem
                                       className="cursor-pointer gap-2 text-[12px]"
-                                      onClick={() => startProjectChat(project.id)}
+                                      onClick={() =>
+                                        startProjectChat(project.id)
+                                      }
                                     >
                                       <PenSquareIcon className="size-3.5" />
                                       New chat
@@ -445,7 +452,10 @@ export function AppSidebar({ user }: { user: User | undefined }) {
                                       className="cursor-pointer gap-2 text-[12px]"
                                       onClick={() => {
                                         setUploadProjectId(project.id);
-                                        setTimeout(() => fileInputRef.current?.click(), 0);
+                                        setTimeout(
+                                          () => fileInputRef.current?.click(),
+                                          0
+                                        );
                                       }}
                                     >
                                       <UploadIcon className="size-3.5" />
@@ -455,16 +465,24 @@ export function AppSidebar({ user }: { user: User | undefined }) {
                                       className="cursor-pointer gap-2 text-[12px]"
                                       onClick={() => {
                                         setRenameName(project.name);
-                                        setRenameTarget({ id: project.id, name: project.name });
+                                        setRenameTarget({
+                                          id: project.id,
+                                          name: project.name,
+                                        });
                                       }}
                                     >
-                                      <span className="size-3.5 flex items-center justify-center text-[11px]">✎</span>
+                                      <span className="size-3.5 flex items-center justify-center text-[11px]">
+                                        ✎
+                                      </span>
                                       Rename
                                     </DropdownMenuItem>
                                     <DropdownMenuItem
                                       className="cursor-pointer gap-2 text-[12px] text-destructive"
                                       onClick={() =>
-                                        setDeleteTarget({ id: project.id, name: project.name })
+                                        setDeleteTarget({
+                                          id: project.id,
+                                          name: project.name,
+                                        })
                                       }
                                     >
                                       <TrashIcon className="size-3.5" />
@@ -476,28 +494,29 @@ export function AppSidebar({ user }: { user: User | undefined }) {
 
                               {isExpanded && (
                                 <div className="ml-3 mt-0.5 list-none border-l border-sidebar-border/20 pl-2">
-                                  {!projectChats[project.id] ? (
+                                  {projectChats[project.id] ? (
+                                    projectChats[project.id].length === 0 ? (
+                                      <div className="px-2 py-2 text-[11px] text-sidebar-foreground/30">
+                                        No chats yet
+                                      </div>
+                                    ) : (
+                                      projectChats[project.id].map(
+                                        (chat, idx) => (
+                                          <ChatItem
+                                            chat={chat}
+                                            compact
+                                            isActive={false}
+                                            key={chat.id}
+                                            onDelete={() => {}}
+                                            setOpenMobile={setOpenMobile}
+                                          />
+                                        )
+                                      )
+                                    )
+                                  ) : (
                                     <div className="px-2 py-2 text-[11px] text-sidebar-foreground/20">
                                       Loading...
                                     </div>
-                                  ) : projectChats[project.id].length ===
-                                    0 ? (
-                                    <div className="px-2 py-2 text-[11px] text-sidebar-foreground/30">
-                                      No chats yet
-                                    </div>
-                                  ) : (
-                                    projectChats[project.id].map(
-                                      (chat, idx) => (
-                                        <ChatItem
-                                          key={chat.id}
-                                          chat={chat}
-                                          isActive={false}
-                                          onDelete={() => {}}
-                                          setOpenMobile={setOpenMobile}
-                                          compact
-                                        />
-                                      )
-                                    )
                                   )}
                                 </div>
                               )}
@@ -524,25 +543,29 @@ export function AppSidebar({ user }: { user: User | undefined }) {
         <SidebarRail />
       </Sidebar>
 
-      <SettingsSheet onOpenChange={setSettingsOpen} open={settingsOpen} tab={settingsTab} />
+      <SettingsSheet
+        onOpenChange={setSettingsOpen}
+        open={settingsOpen}
+        tab={settingsTab}
+      />
 
       {filesDialogTarget && (
         <ProjectFilesDialog
-          projectId={filesDialogTarget.id}
-          projectName={filesDialogTarget.name}
-          open={!!filesDialogTarget}
           onOpenChange={(o) => {
             if (!o) setFilesDialogTarget(null);
           }}
+          open={!!filesDialogTarget}
+          projectId={filesDialogTarget.id}
+          projectName={filesDialogTarget.name}
         />
       )}
 
       {/* Rename Project Dialog */}
       <Dialog
-        open={!!renameTarget}
         onOpenChange={(o) => {
           if (!o) setRenameTarget(null);
         }}
+        open={!!renameTarget}
       >
         <DialogContent className="max-w-sm">
           <DialogHeader>
@@ -555,21 +578,21 @@ export function AppSidebar({ user }: { user: User | undefined }) {
             }}
           >
             <Input
-              value={renameName}
-              onChange={(e) => setRenameName(e.target.value)}
-              placeholder="Project name"
               autoFocus
               className="mb-4"
+              onChange={(e) => setRenameName(e.target.value)}
+              placeholder="Project name"
+              value={renameName}
             />
             <DialogFooter>
               <Button
+                onClick={() => setRenameTarget(null)}
                 type="button"
                 variant="ghost"
-                onClick={() => setRenameTarget(null)}
               >
                 Cancel
               </Button>
-              <Button type="submit" disabled={!renameName.trim()}>
+              <Button disabled={!renameName.trim()} type="submit">
                 Rename
               </Button>
             </DialogFooter>
@@ -579,10 +602,10 @@ export function AppSidebar({ user }: { user: User | undefined }) {
 
       {/* Delete Project Confirmation */}
       <AlertDialog
-        open={!!deleteTarget}
         onOpenChange={(o) => {
           if (!o) setDeleteTarget(null);
         }}
+        open={!!deleteTarget}
       >
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -613,14 +636,14 @@ export function AppSidebar({ user }: { user: User | undefined }) {
       />
 
       <CreateProjectDialog
-        open={createProjectOpen}
-        onOpenChange={setCreateProjectOpen}
         onCreated={(project) => {
           loadProjects();
           setTimeout(() => {
             router.push(`/?projectId=${project.id}`);
           }, 200);
         }}
+        onOpenChange={setCreateProjectOpen}
+        open={createProjectOpen}
       />
 
       <AlertDialog

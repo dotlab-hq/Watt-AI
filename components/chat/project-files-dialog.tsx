@@ -1,7 +1,6 @@
 "use client";
 
 import { FileTextIcon, LoaderIcon } from "lucide-react";
-import { useState } from "react";
 import useSWR from "swr";
 import {
   Dialog,
@@ -63,7 +62,7 @@ export function ProjectFilesDialog({
   const files = data?.files ?? [];
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog onOpenChange={onOpenChange} open={open}>
       <DialogContent className="max-w-lg">
         <DialogHeader>
           <DialogTitle>Files in {projectName}</DialogTitle>
@@ -82,8 +81,8 @@ export function ProjectFilesDialog({
             <div className="space-y-0.5">
               {files.map((file) => (
                 <div
-                  key={file.id}
                   className="flex items-center gap-3 rounded-md px-3 py-2 text-sm hover:bg-accent/50"
+                  key={file.id}
                 >
                   <FileTextIcon className="size-4 shrink-0 text-muted-foreground" />
                   <span className="min-w-0 flex-1 truncate">

@@ -1,5 +1,5 @@
-import { auth, betterAuthInstance } from "@/app/(auth)/auth";
 import { headers } from "next/headers";
+import { auth, betterAuthInstance } from "@/app/(auth)/auth";
 
 export async function GET() {
   const session = await auth();
@@ -13,7 +13,7 @@ export async function GET() {
     new Request(`${betterAuthInstance.options.baseURL}/organization/list`, {
       method: "GET",
       headers: Object.fromEntries(h.entries()),
-    }),
+    })
   );
 
   return response;
@@ -37,7 +37,7 @@ export async function POST(request: Request) {
         "Content-Type": "application/json",
       },
       body: JSON.stringify(body),
-    }),
+    })
   );
 
   return response;

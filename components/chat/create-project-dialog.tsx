@@ -69,11 +69,11 @@ export function CreateProjectDialog({
 
   return (
     <Dialog
-      open={open}
       onOpenChange={(o) => {
         if (!o) reset();
         onOpenChange(o);
       }}
+      open={open}
     >
       <DialogContent className="max-w-md">
         <DialogHeader>
@@ -88,12 +88,12 @@ export function CreateProjectDialog({
               Name
             </label>
             <Input
+              autoFocus
               id="project-name"
               onChange={(e) => setName(e.target.value)}
               placeholder="My Project"
               required
               value={name}
-              autoFocus
             />
           </div>
           <div className="space-y-2">

@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Sora, Onest, Reddit_Mono } from "next/font/google";
+import { Geist, Geist_Mono, Onest, Reddit_Mono, Sora } from "next/font/google";
+import { PersonalizationApplier } from "@/components/personalization-applier";
 import { ThemeProvider } from "@/components/theme-provider";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { PersonalizationApplier } from "@/components/personalization-applier";
 
 import "./globals.css";
 

@@ -43,6 +43,7 @@ import { editDocument } from "@/lib/ai/tools/edit-document";
 import { getWeather } from "@/lib/ai/tools/get-weather";
 import { localTime } from "@/lib/ai/tools/local-time";
 import { createMemoryTools } from "@/lib/ai/tools/memory";
+import { randomApiTool } from "@/lib/ai/tools/random-api";
 import { readArtifact } from "@/lib/ai/tools/read-artifact";
 import { renderCards } from "@/lib/ai/tools/render-cards";
 import { requestSuggestions } from "@/lib/ai/tools/request-suggestions";
@@ -50,7 +51,6 @@ import { timer } from "@/lib/ai/tools/timer";
 import { unitConverter } from "@/lib/ai/tools/unit-converter";
 import { updateDocument } from "@/lib/ai/tools/update-document";
 import { verifyContent } from "@/lib/ai/tools/verify";
-import { randomApiTool } from "@/lib/ai/tools/random-api";
 import {
   rankTracker,
   webExtract,

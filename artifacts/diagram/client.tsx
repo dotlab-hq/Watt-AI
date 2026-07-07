@@ -1,11 +1,11 @@
-import { useCallback, useRef, useState } from "react";
-import { Pencil, Download, MaximizeIcon, MinimizeIcon } from "lucide-react";
+import { Download, MaximizeIcon, MinimizeIcon, Pencil } from "lucide-react";
+import { useCallback, useRef } from "react";
 import { toast } from "sonner";
-import { Artifact } from "@/components/chat/create-artifact";
-import { CopyIcon, RedoIcon, UndoIcon } from "@/components/chat/icons";
-import { ExcalidrawViewer } from "@/components/chat/excalidraw-viewer";
-import { cn } from "@/lib/utils";
 import type { UIArtifact } from "@/components/chat/artifact";
+import { Artifact } from "@/components/chat/create-artifact";
+import { ExcalidrawViewer } from "@/components/chat/excalidraw-viewer";
+import { CopyIcon, RedoIcon, UndoIcon } from "@/components/chat/icons";
+import { cn } from "@/lib/utils";
 
 type DiagramEditorProps = {
   title: string;
@@ -17,7 +17,9 @@ type DiagramEditorProps = {
   isLoading: boolean;
   onSaveContent: (updatedContent: string, debounce: boolean) => void;
   metadata?: Record<string, unknown>;
-  setMetadata?: (updater: (prev: Record<string, unknown>) => Record<string, unknown>) => void;
+  setMetadata?: (
+    updater: (prev: Record<string, unknown>) => Record<string, unknown>
+  ) => void;
 };
 
 function DiagramEditor({
@@ -34,7 +36,10 @@ function DiagramEditor({
 
   const toggleFullscreen = useCallback(() => {
     if (!setMetadata) return;
-    setMetadata((prev) => ({ ...prev, diagramFullscreen: !prev?.diagramFullscreen }));
+    setMetadata((prev) => ({
+      ...prev,
+      diagramFullscreen: !prev?.diagramFullscreen,
+    }));
   }, [setMetadata]);
 
   const handleChange = useCallback(
@@ -48,7 +53,7 @@ function DiagramEditor({
         saveTimerRef.current = null;
       }, 1000);
     },
-    [onSaveContent],
+    [onSaveContent]
   );
 
   if (isLoading || (status === "streaming" && !content)) {
@@ -60,13 +65,27 @@ function DiagramEditor({
   }
 
   return (
-    <div className={cn("flex h-full flex-col", isFullscreen && "fixed inset-0 z-[100] bg-background")}>
+    <div
+      className={cn(
+        "flex h-full flex-col",
+        isFullscreen && "fixed inset-0 z-[100] bg-background"
+      )}
+    >
       <div className="sticky top-0 z-10 flex items-center justify-between border-b border-border/50 bg-background px-4 py-2">
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <rect x="3" y="3" width="7" height="7" rx="1" />
-            <rect x="14" y="3" width="7" height="7" rx="1" />
-            <rect x="3" y="14" width="7" height="7" rx="1" />
+          <svg
+            fill="none"
+            height="14"
+            stroke="currentColor"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth="2"
+            viewBox="0 0 24 24"
+            width="14"
+          >
+            <rect height="7" rx="1" width="7" x="3" y="3" />
+            <rect height="7" rx="1" width="7" x="14" y="3" />
+            <rect height="7" rx="1" width="7" x="3" y="14" />
             <path d="M14 17.5h7M17.5 14v7" />
           </svg>
           <span className="font-medium">Excalidraw</span>
@@ -77,7 +96,11 @@ function DiagramEditor({
           title={isFullscreen ? "Exit fullscreen" : "Fullscreen"}
           type="button"
         >
-          {isFullscreen ? <MinimizeIcon size={14} /> : <MaximizeIcon size={14} />}
+          {isFullscreen ? (
+            <MinimizeIcon size={14} />
+          ) : (
+            <MaximizeIcon size={14} />
+          )}
         </button>
       </div>
       <div className="flex-1">

@@ -1,5 +1,10 @@
 import type { InferAgentUIMessage } from "ai";
-import { readUIMessageStream, toUIMessageStream, tool, ToolLoopAgent } from "ai";
+import {
+  readUIMessageStream,
+  ToolLoopAgent,
+  tool,
+  toUIMessageStream,
+} from "ai";
 import { z } from "zod";
 import { getLanguageModel } from "@/lib/ai/providers";
 
@@ -8,7 +13,8 @@ const HTTP_METHOD = z
   .describe("HTTP method for the request");
 
 export const httpRequest = tool({
-  description: "Execute an HTTP request and return full details including headers and body.",
+  description:
+    "Execute an HTTP request and return full details including headers and body.",
   inputSchema: z.object({
     method: HTTP_METHOD,
     url: z.string().url().describe("The URL to request"),
@@ -16,7 +22,10 @@ export const httpRequest = tool({
       .record(z.string())
       .optional()
       .describe("Optional headers object (Authorization, Content-Type, etc.)"),
-    body: z.string().optional().describe("JSON body for POST/PUT/PATCH requests"),
+    body: z
+      .string()
+      .optional()
+      .describe("JSON body for POST/PUT/PATCH requests"),
     timeout: z
       .number()
       .min(1000)
@@ -35,7 +44,8 @@ export const httpRequest = tool({
           "Content-Type": "application/json",
           ...headers,
         },
-        body: body && ["POST", "PUT", "PATCH"].includes(method) ? body : undefined,
+        body:
+          body && ["POST", "PUT", "PATCH"].includes(method) ? body : undefined,
         signal: controller.signal,
       });
 
@@ -94,7 +104,9 @@ CRITICAL RULES:
   },
 });
 
-export type RandomApiSubagentMessage = InferAgentUIMessage<typeof randomApiSubagent>;
+export type RandomApiSubagentMessage = InferAgentUIMessage<
+  typeof randomApiSubagent
+>;
 
 const executeRandomApi = async function* (
   { task }: { task: string },
@@ -125,12 +137,11 @@ export const randomApiTool = tool({
   }),
   execute: executeRandomApi,
   toModelOutput: ({ output: message }) => {
-    const lastTextPart = message?.parts.findLast(
-      (p: any) => p.type === "text"
-    );
+    const lastTextPart = message?.parts.findLast((p: any) => p.type === "text");
     return {
       type: "text",
-      value: (lastTextPart?.text as string | undefined) ?? "Random API completed.",
+      value:
+        (lastTextPart?.text as string | undefined) ?? "Random API completed.",
     };
   },
 });

@@ -1,38 +1,84 @@
 "use client";
 
 const FLAGS: Record<string, string> = {
-  USD: "🇺🇸", EUR: "🇪🇺", GBP: "🇬🇧", JPY: "🇯🇵", CNY: "🇨🇳",
-  INR: "🇮🇳", CAD: "🇨🇦", AUD: "🇦🇺", CHF: "🇨🇭", KRW: "🇰🇷",
-  BRL: "🇧🇷", MXN: "🇲🇽", SEK: "🇸🇪", NOK: "🇳🇴", DKK: "🇩🇰",
-  SGD: "🇸🇬", HKD: "🇭🇰", THB: "🇹🇭", ZAR: "🇿🇦", RUB: "🇷🇺",
-  PLN: "🇵🇱", CZK: "🇨🇿", TRY: "🇹🇷", ARS: "🇦🇷", EGP: "🇪🇬",
-  NGN: "🇳🇬", KES: "🇰🇪", GHS: "🇬🇭", PHP: "🇵🇭", IDR: "🇮🇩",
-  MYR: "🇲🇾", VND: "🇻🇳", TWD: "🇹🇼", NZD: "🇳🇿", SAR: "🇸🇦",
-  AED: "🇦🇪", ILS: "🇮🇱", PKR: "🇵🇰", BDT: "🇧🇩", LKR: "🇱🇰",
+  USD: "🇺🇸",
+  EUR: "🇪🇺",
+  GBP: "🇬🇧",
+  JPY: "🇯🇵",
+  CNY: "🇨🇳",
+  INR: "🇮🇳",
+  CAD: "🇨🇦",
+  AUD: "🇦🇺",
+  CHF: "🇨🇭",
+  KRW: "🇰🇷",
+  BRL: "🇧🇷",
+  MXN: "🇲🇽",
+  SEK: "🇸🇪",
+  NOK: "🇳🇴",
+  DKK: "🇩🇰",
+  SGD: "🇸🇬",
+  HKD: "🇭🇰",
+  THB: "🇹🇭",
+  ZAR: "🇿🇦",
+  RUB: "🇷🇺",
+  PLN: "🇵🇱",
+  CZK: "🇨🇿",
+  TRY: "🇹🇷",
+  ARS: "🇦🇷",
+  EGP: "🇪🇬",
+  NGN: "🇳🇬",
+  KES: "🇰🇪",
+  GHS: "🇬🇭",
+  PHP: "🇵🇭",
+  IDR: "🇮🇩",
+  MYR: "🇲🇾",
+  VND: "🇻🇳",
+  TWD: "🇹🇼",
+  NZD: "🇳🇿",
+  SAR: "🇸🇦",
+  AED: "🇦🇪",
+  ILS: "🇮🇱",
+  PKR: "🇵🇰",
+  BDT: "🇧🇩",
+  LKR: "🇱🇰",
 };
 
 export function CurrencyConverter({
   result,
 }: {
   result:
-    | { amount: number; from: string; to: string; rate: number; result: number; date?: string }
+    | {
+        amount: number;
+        from: string;
+        to: string;
+        rate: number;
+        result: number;
+        date?: string;
+      }
     | { error: string };
 }) {
   if ("error" in result) {
     return (
       <div className="w-full overflow-hidden rounded-2xl border border-border/50 bg-muted/30 p-4">
-        <div className="mb-2 text-muted-foreground text-xs">Currency Converter</div>
+        <div className="mb-2 text-muted-foreground text-xs">
+          Currency Converter
+        </div>
         <div className="text-destructive text-sm">{result.error}</div>
       </div>
     );
   }
 
   const fmt = (val: number, code: string) =>
-    val.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    val.toLocaleString(undefined, {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
 
   return (
     <div className="w-full overflow-hidden rounded-2xl border border-border/50 bg-gradient-to-br from-emerald-500/10 via-teal-500/10 to-cyan-500/10 p-4">
-      <div className="mb-3 text-muted-foreground text-xs">Currency Converter</div>
+      <div className="mb-3 text-muted-foreground text-xs">
+        Currency Converter
+      </div>
 
       <div className="flex items-center gap-4">
         {/* From */}

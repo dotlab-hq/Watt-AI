@@ -1,7 +1,11 @@
 "use client";
 
 import { ChevronDownIcon, ExternalLinkIcon, GlobeIcon } from "lucide-react";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 
 export type HttpRequest = {
   method: string;
@@ -27,7 +31,9 @@ export type HttpResult = {
 function StatusBadge({ status, ok }: { status: number; ok: boolean }) {
   const color = ok ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800";
   return (
-    <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${color}`}>{status}</span>
+    <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${color}`}>
+      {status}
+    </span>
   );
 }
 
@@ -35,10 +41,12 @@ function HeadersViewer({ headers }: { headers: Record<string, string> }) {
   const entries = Object.entries(headers);
   return entries.length > 0 ? (
     <div className="mt-2">
-      <h5 className="text-xs font-medium text-muted-foreground uppercase">Headers</h5>
+      <h5 className="text-xs font-medium text-muted-foreground uppercase">
+        Headers
+      </h5>
       <div className="mt-1 max-h-32 overflow-y-auto rounded-md bg-muted/30 p-2 text-xs">
         {entries.map(([key, value]) => (
-          <div key={key} className="font-mono">
+          <div className="font-mono" key={key}>
             <span className="text-foreground">{key}</span>:{" "}
             <span className="text-muted-foreground">{value}</span>
           </div>
@@ -49,15 +57,25 @@ function HeadersViewer({ headers }: { headers: Record<string, string> }) {
 }
 
 function BodyViewer({ body }: { body: unknown }) {
-  if (body === null || body === undefined) { return null; }
+  if (body === null || body === undefined) {
+    return null;
+  }
 
-  const content = typeof body === "string" ? body : JSON.stringify(body, null, 2);
-  const truncated = content.length > 2000 ? `${content.slice(0, 2000)}\n... (truncated)` : content;
+  const content =
+    typeof body === "string" ? body : JSON.stringify(body, null, 2);
+  const truncated =
+    content.length > 2000
+      ? `${content.slice(0, 2000)}\n... (truncated)`
+      : content;
 
   return (
     <div className="mt-2">
-      <h5 className="text-xs font-medium text-muted-foreground uppercase">Body</h5>
-      <pre className="mt-1 max-h-48 overflow-y-auto rounded-md bg-muted/30 p-2 text-xs">{truncated}</pre>
+      <h5 className="text-xs font-medium text-muted-foreground uppercase">
+        Body
+      </h5>
+      <pre className="mt-1 max-h-48 overflow-y-auto rounded-md bg-muted/30 p-2 text-xs">
+        {truncated}
+      </pre>
     </div>
   );
 }
@@ -88,19 +106,27 @@ export function RandomApi({ result }: { result: HttpResult }) {
         <CollapsibleContent className="border-t px-3 pb-3">
           <div className="mt-3 space-y-3">
             <div>
-              <h4 className="text-xs font-medium text-muted-foreground uppercase">Request</h4>
-              <pre className="mt-1 text-xs">{JSON.stringify(request, null, 2)}</pre>
+              <h4 className="text-xs font-medium text-muted-foreground uppercase">
+                Request
+              </h4>
+              <pre className="mt-1 text-xs">
+                {JSON.stringify(request, null, 2)}
+              </pre>
             </div>
             {hasResponse && (
               <div>
-                <h4 className="text-xs font-medium text-muted-foreground uppercase">Response</h4>
+                <h4 className="text-xs font-medium text-muted-foreground uppercase">
+                  Response
+                </h4>
                 <HeadersViewer headers={response.headers} />
                 <BodyViewer body={response.body} />
               </div>
             )}
             {error && (
               <div>
-                <h4 className="text-xs font-medium text-red-600 uppercase">Error</h4>
+                <h4 className="text-xs font-medium text-red-600 uppercase">
+                  Error
+                </h4>
                 <pre className="mt-1 text-xs text-red-500">{error}</pre>
               </div>
             )}

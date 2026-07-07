@@ -27,7 +27,11 @@ export async function POST(request: Request) {
       );
     }
 
-    if (!["image/jpeg", "image/png", "image/webp", "image/gif"].includes(file.type)) {
+    if (
+      !["image/jpeg", "image/png", "image/webp", "image/gif"].includes(
+        file.type
+      )
+    ) {
       return NextResponse.json(
         { error: "Only JPEG, PNG, WebP, or GIF allowed" },
         { status: 400 }

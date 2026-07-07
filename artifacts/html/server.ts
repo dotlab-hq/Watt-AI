@@ -56,12 +56,7 @@ export const htmlDocumentHandler = createDocumentHandler<"html">({
 
     return stripFences(draftContent);
   },
-  onUpdateDocument: async ({
-    document,
-    description,
-    dataStream,
-    modelId,
-  }) => {
+  onUpdateDocument: async ({ document, description, dataStream, modelId }) => {
     let draftContent = "";
 
     const { stream } = streamText({

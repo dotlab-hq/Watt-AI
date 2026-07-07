@@ -1,7 +1,7 @@
-import { type NextRequest } from "next/server";
+import type { NextRequest } from "next/server";
 import { auth } from "@/app/(auth)/auth";
-import { getProjectById } from "@/lib/db/queries/projects";
 import { getChatsByProjectId } from "@/lib/db/queries/chats";
+import { getProjectById } from "@/lib/db/queries/projects";
 import { ChatbotError } from "@/lib/errors";
 
 export async function GET(

@@ -1,7 +1,7 @@
-import { generateSpeech } from "ai";
 import { openai } from "@ai-sdk/openai";
 import { GetObjectCommand, PutObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import { generateSpeech } from "ai";
 import { eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
 
@@ -24,7 +24,11 @@ export async function POST(request: Request) {
   let text: string | undefined;
 
   try {
-    ({ messageId, chatId, text } = await request.json() as { messageId: string; chatId: string; text: string });
+    ({ messageId, chatId, text } = (await request.json()) as {
+      messageId: string;
+      chatId: string;
+      text: string;
+    });
 
     if (!messageId || !chatId || !text) {
       return NextResponse.json(
@@ -108,7 +112,12 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ url });
   } catch (error) {
-    console.error("[speech] Error for messageId=%s chatId=%s:", messageId, chatId, error);
+    console.error(
+      "[speech] Error for messageId=%s chatId=%s:",
+      messageId,
+      chatId,
+      error
+    );
     return NextResponse.json(
       { error: "Speech generation failed" },
       { status: 500 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { DOMParser, type Node } from "prosemirror-model";
+import { DOMParser } from "prosemirror-model";
 import { Decoration, DecorationSet, type EditorView } from "prosemirror-view";
 import { renderToString } from "react-dom/server";
 

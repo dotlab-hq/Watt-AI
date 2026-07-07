@@ -27,9 +27,7 @@ export function Timer({
     startedAt: string;
   };
 }) {
-  const endRef = useRef(
-    new Date(data.startedAt).getTime() + data.durationMs
-  );
+  const endRef = useRef(new Date(data.startedAt).getTime() + data.durationMs);
   const [remaining, setRemaining] = useState(() =>
     formatRemaining(endRef.current - Date.now())
   );

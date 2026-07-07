@@ -25,7 +25,9 @@ export function UnitConverter({
 
       <div className="flex items-center gap-4">
         <div className="flex-1">
-          <div className="mb-1 text-muted-foreground text-xs">{result.from}</div>
+          <div className="mb-1 text-muted-foreground text-xs">
+            {result.from}
+          </div>
           <div className="font-light text-2xl text-foreground">
             {fmt(result.value)}
           </div>

@@ -1,6 +1,7 @@
 import { PinIcon, RefreshCwIcon } from "lucide-react";
 import Link from "next/link";
 import { memo, useCallback, useState } from "react";
+import { unstable_serialize, useSWRConfig } from "swr";
 import { regenerateChatTitle } from "@/app/(chat)/actions";
 import {
   CheckCircleFillIcon,
@@ -10,6 +11,7 @@ import {
   ShareIcon,
   TrashIcon,
 } from "@/components/chat/icons";
+import { getChatHistoryPaginationKey } from "@/components/chat/sidebar-history";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -27,8 +29,6 @@ import {
 } from "@/components/ui/sidebar";
 import { useChatVisibility } from "@/hooks/use-chat-visibility";
 import type { Chat } from "@/lib/db/schema";
-import { unstable_serialize, useSWRConfig } from "swr";
-import { getChatHistoryPaginationKey } from "@/components/chat/sidebar-history";
 
 const PureChatItem = ({
   chat,
@@ -150,7 +150,9 @@ const PureChatItem = ({
             className="cursor-pointer"
             onSelect={() => handleRegenerateTitle()}
           >
-            <RefreshCwIcon className={regenerating ? "size-3 animate-spin" : "size-3"} />
+            <RefreshCwIcon
+              className={regenerating ? "size-3 animate-spin" : "size-3"}
+            />
             <span>Regenerate title</span>
           </DropdownMenuItem>
 

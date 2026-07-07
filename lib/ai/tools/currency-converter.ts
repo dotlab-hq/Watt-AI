@@ -29,7 +29,9 @@ export const currencyConverter = tool({
       );
 
       if (!res.ok) {
-        return { error: `Could not fetch exchange rates (HTTP ${res.status}).` };
+        return {
+          error: `Could not fetch exchange rates (HTTP ${res.status}).`,
+        };
       }
 
       const data = await res.json();
@@ -48,7 +50,9 @@ export const currencyConverter = tool({
         date: data.date,
       };
     } catch {
-      return { error: "Failed to fetch exchange rates. Check your connection." };
+      return {
+        error: "Failed to fetch exchange rates. Check your connection.",
+      };
     }
   },
 });

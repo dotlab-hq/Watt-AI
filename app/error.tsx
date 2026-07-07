@@ -15,8 +15,8 @@ export default function Error({
         {error.message}
       </p>
       <button
-        onClick={() => reset()}
         className="mt-2 cursor-pointer rounded-lg border border-border/50 bg-card px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-muted"
+        onClick={() => reset()}
       >
         Try again
       </button>

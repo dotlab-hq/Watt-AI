@@ -5,7 +5,9 @@ export const localTime = tool({
   description:
     "Get the current local time and date for a city or timezone. Useful for knowing what time it is somewhere in the world.",
   inputSchema: z.object({
-    city: z.string().describe("City name (e.g., 'Tokyo', 'New York', 'London')"),
+    city: z
+      .string()
+      .describe("City name (e.g., 'Tokyo', 'New York', 'London')"),
     timezone: z
       .string()
       .optional()
@@ -50,10 +52,14 @@ export const localTime = tool({
       city: input.city,
       timezone: tz,
       localTime: timeStr,
-      utcOffset: now.toLocaleString("en-US", {
-        timeZone: tz || undefined,
-        timeZoneName: "longOffset",
-      }).split(",").pop()?.trim(),
+      utcOffset: now
+        .toLocaleString("en-US", {
+          timeZone: tz || undefined,
+          timeZoneName: "longOffset",
+        })
+        .split(",")
+        .pop()
+        ?.trim(),
     };
   },
 });

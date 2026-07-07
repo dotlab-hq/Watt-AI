@@ -39,7 +39,9 @@ export async function checkIpRateLimit(ip: string | undefined) {
     pipeline.incr(key);
     pipeline.expire(key, TTL_SECONDS, "NX");
     const results = await pipeline.exec();
-    if (!results) { return; }
+    if (!results) {
+      return;
+    }
     const [, count] = results[0] ?? [];
     if (typeof count === "number" && count > MAX_MESSAGES) {
       throw new ChatbotError("rate_limit:chat");
