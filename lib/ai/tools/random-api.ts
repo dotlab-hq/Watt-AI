@@ -112,7 +112,7 @@ const executeRandomApi = async function* (
   { task }: { task: string },
   { abortSignal }: { abortSignal: AbortSignal }
 ) {
-  const result = randomApiSubagent.stream({
+  const result = await randomApiSubagent.stream({
     prompt: task,
     abortSignal,
   });

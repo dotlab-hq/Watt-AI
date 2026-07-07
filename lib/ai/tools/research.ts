@@ -13,7 +13,7 @@ const executeResearch = async function* (
   { task }: { task: string },
   { abortSignal }: { abortSignal: AbortSignal }
 ) {
-  const result = researchSubagent.stream({
+  const result = await researchSubagent.stream({
     prompt: task,
     abortSignal,
   });
