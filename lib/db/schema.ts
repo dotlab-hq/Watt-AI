@@ -532,7 +532,7 @@ export const skill = chatbot.table(
     name: text("name").notNull(),
     slug: text("slug").notNull().unique(),
     description: text("description"),
-    content: text("content").notNull(),
+    content: text("content"),
     isSystem: boolean("is_system").notNull().default(false),
     ownerId: text("owner_id").references(() => user.id, {
       onDelete: "cascade",

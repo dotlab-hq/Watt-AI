@@ -17,7 +17,7 @@ export async function createSkill({
   name: string;
   slug: string;
   description?: string;
-  content: string;
+  content?: string;
   isSystem?: boolean;
   ownerId?: string;
   providerReference?: string;

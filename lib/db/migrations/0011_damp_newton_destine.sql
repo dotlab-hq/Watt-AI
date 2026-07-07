@@ -1,0 +1,1 @@
+ALTER TABLE "chatbot"."Skill" ALTER COLUMN "content" DROP NOT NULL;

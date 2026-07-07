@@ -473,11 +473,22 @@ export async function POST(request: Request) {
         }
 
         // Build providerOptions for skill references
+        // providerReference is stored as a JSON string in the DB — parse it
+        // into the Record<providerName, skillId> object that the providers expect.
         const isAnthropicModel = chatModel.startsWith("claude-");
-        const providerSkillRefs = enabledSkillsForInference.map((s) => ({
-          type: "custom" as const,
-          providerReference: String(s.providerReference),
-        }));
+        const providerSkillRefs = enabledSkillsForInference
+          .map((s) => {
+            const ref = s.providerReference;
+            if (!ref) {
+              return null;
+            }
+            try {
+              return JSON.parse(ref) as Record<string, string>;
+            } catch {
+              return null;
+            }
+          })
+          .filter((ref): ref is Record<string, string> => ref !== null);
 
         let providerOptions: Record<string, any> = {};
         if (providerSkillRefs.length > 0) {
@@ -485,7 +496,10 @@ export async function POST(request: Request) {
             providerOptions = {
               anthropic: {
                 container: {
-                  skills: providerSkillRefs,
+                  skills: providerSkillRefs.map((ref) => ({
+                    type: "custom" as const,
+                    providerReference: ref,
+                  })),
                 },
               },
             };
@@ -497,8 +511,8 @@ export async function POST(request: Request) {
                   environment: {
                     type: "containerAuto",
                     skills: providerSkillRefs.map((ref) => ({
-                      type: "skillReference",
-                      providerReference: ref.providerReference,
+                      type: "skillReference" as const,
+                      providerReference: ref,
                     })),
                   },
                 },

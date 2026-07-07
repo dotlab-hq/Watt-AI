@@ -78,6 +78,13 @@
       "when": 1783317164924,
       "tag": "0010_add-admin-plugin-fields",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1783422755044,
+      "tag": "0011_damp_newton_destine",
+      "breakpoints": true
     }
   ]
 }

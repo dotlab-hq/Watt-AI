@@ -42,7 +42,7 @@ type Skill = {
   name: string;
   slug: string;
   description: string | null;
-  content: string;
+  content: string | null;
   isSystem: boolean;
   ownerId: string;
   isEnabled: boolean;
@@ -118,7 +118,7 @@ export function SkillsTab() {
     setEditingSkill(skill);
     setFormName(skill.name);
     setFormDescription(skill.description ?? "");
-    setFormContent(skill.content);
+    setFormContent(skill.content ?? "");
     setFormIsSystem(skill.isSystem);
     setShowCreate(true);
   };
