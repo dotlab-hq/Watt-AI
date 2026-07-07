@@ -38,7 +38,7 @@ export type CardItem = z.infer<typeof cardItemSchema>;
 
 export const renderCards = tool({
   description:
-    "Render a horizontal scrollable card carousel in the chat. Use this to show links, search results, products, resources, articles, or any collection of items as visual cards. Each card shows a thumbnail, title, short description, and links to the target URL. Use this INSTEAD of listing links as plain text — it provides a much richer visual experience.",
+    "Render a horizontal scrollable card carousel in the chat. The cards appear in a visual carousel - do NOT output card contents as text. Simply say something like 'Here it is' or 'Here are the results' and let the cards render. Use this to show links, search results, products, resources, articles, or any collection of items as visual cards. Each card shows a thumbnail, title, short description, and links to the target URL. Never list the card data as plain text — only show the rendered carousel.",
   inputSchema: z.object({
     heading: z
       .string()

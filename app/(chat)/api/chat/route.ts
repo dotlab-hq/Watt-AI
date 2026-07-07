@@ -50,6 +50,7 @@ import { timer } from "@/lib/ai/tools/timer";
 import { unitConverter } from "@/lib/ai/tools/unit-converter";
 import { updateDocument } from "@/lib/ai/tools/update-document";
 import { verifyContent } from "@/lib/ai/tools/verify";
+import { randomApiTool } from "@/lib/ai/tools/random-api";
 import {
   rankTracker,
   webExtract,
@@ -395,6 +396,7 @@ export async function POST(request: Request) {
           verifyContent,
           readArtifact: readArtifact(),
           renderCards,
+          randomApiTool,
           ...(process.env.OPENSERP_API_KEY || process.env.OPENSERP_BASE_URL
             ? {
                 webSearch,
@@ -420,6 +422,7 @@ export async function POST(request: Request) {
           "verifyContent",
           "readArtifact",
           "renderCards",
+          "randomApiTool",
           ...(process.env.OPENSERP_API_KEY || process.env.OPENSERP_BASE_URL
             ? [
                 "webSearch",

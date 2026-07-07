@@ -23,6 +23,7 @@ import { LocalTime } from "@/components/chat/local-time";
 import { MessageActions } from "@/components/chat/message-actions";
 import { MessageReasoning } from "@/components/chat/message-reasoning";
 import { PreviewAttachment } from "@/components/chat/preview-attachment";
+import { RandomApi } from "@/components/chat/random-api";
 import {
   extractImageSearchResults,
   extractSearchResults,
@@ -384,6 +385,16 @@ const PurePreviewMessage = ({
 
       if (state === "output-available" && part.output) {
         return <CardCarousel data={part.output} key={toolCallId} />;
+      }
+
+      return null;
+    }
+
+    if (type === "tool-httpRequest") {
+      const { toolCallId, state } = part;
+
+      if (state === "output-available" && part.output) {
+        return <RandomApi result={part.output} key={toolCallId} />;
       }
 
       return null;
