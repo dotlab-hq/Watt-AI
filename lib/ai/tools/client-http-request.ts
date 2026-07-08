@@ -10,10 +10,10 @@ import { z } from "zod";
  *     that routes through HTTP_PROXY.
  */
 export const clientHttpRequest = tool({
-  description: `Execute an HTTP request from your browser (no proxy).
-Use this to call public APIs when you need the request to originate from the user's IP address.
-Returns status, headers, and parsed JSON body.
-For proxied requests, use the server-side httpRequest tool instead.`,
+  description: `Execute an HTTP request from the CLIENT/BROWSER (no proxy, user's IP).
+Use this when the user explicitly asks for a client-side call, or says 'from my browser/IP', 'client call', or 'from my machine'.
+Returns status, headers, and parsed JSON body rendered as a rich card.
+For server-side/proxied requests (the default), use the server-side randomApiTool/httpRequest instead.`,
   inputSchema: z.object({
     method: z
       .enum(["GET", "POST", "PUT", "PATCH", "DELETE"])

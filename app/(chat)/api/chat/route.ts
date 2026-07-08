@@ -37,6 +37,7 @@ import {
 import { getLanguageModel } from "@/lib/ai/providers";
 import { retryableStreamText } from "@/lib/ai/retry";
 import { calculator } from "@/lib/ai/tools/calculator";
+import { clientHttpRequest } from "@/lib/ai/tools/client-http-request";
 import { createDocument } from "@/lib/ai/tools/create-document";
 import { currencyConverter } from "@/lib/ai/tools/currency-converter";
 import { editDocument } from "@/lib/ai/tools/edit-document";
@@ -398,6 +399,7 @@ export async function POST(request: Request) {
           readArtifact: readArtifact(),
           renderCards,
           randomApiTool,
+          clientHttpRequest,
           playVideo,
           ...(process.env.OPENSERP_API_KEY || process.env.OPENSERP_BASE_URL
             ? {
@@ -425,6 +427,7 @@ export async function POST(request: Request) {
           "readArtifact",
           "renderCards",
           "randomApiTool",
+          "clientHttpRequest",
           "playVideo",
           ...(process.env.OPENSERP_API_KEY || process.env.OPENSERP_BASE_URL
             ? [

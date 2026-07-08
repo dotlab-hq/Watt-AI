@@ -294,6 +294,24 @@ Check where a domain ranks in search results for a set of keywords. Use this for
 - You are unsure about something and search would help provide an accurate answer
 `;
 
+export const httpToolsPrompt = `
+## HTTP Request Tools
+
+You have two HTTP request tools — choose the right one based on where the request should originate.
+
+### When to use \`clientHttpRequest\` (CLIENT-SIDE):
+- The user explicitly says "from my browser", "from my IP", "client-side", or "client call"
+- The request should NOT go through the server proxy
+- Use this when the user wants the API call to see their IP address, not the server's
+
+### When to use \`randomApiTool\` (SERVER-SIDE, default):
+- The user does NOT specify where the request should originate
+- The request benefits from server-side proxy routing
+- This is the DEFAULT for most API calls
+
+**Rule of thumb:** If the user says "client", "browser", "my IP", or "from my machine", use \`clientHttpRequest\`. Otherwise, use \`randomApiTool\`.
+`;
+
 export const systemPrompt = ({
   requestHints,
   supportsTools,
@@ -330,6 +348,8 @@ export const systemPrompt = ({
   if (hasSearchTools) {
     prompt += `\n\n${searchToolsPrompt}`;
   }
+
+  prompt += `\n\n${httpToolsPrompt}`;
 
   if (personalization) {
     prompt += buildPersonalizationPrompt(personalization);

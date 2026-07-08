@@ -15,7 +15,7 @@ const HTTP_METHOD = z
 
 export const httpRequest = tool({
   description:
-    "Execute an HTTP request or API call on behalf of user and display the result in a beautiful interactive collapsible UI widget that shows method, URL, status badge, headers viewer, and response body formatter. Results render automatically as a rich card in the chat.",
+    "Execute an HTTP request on the SERVER (via proxy/HTTP_PROXY). This is the DEFAULT for API calls. Routes through the server-side proxy so the request originates from the server IP. Use this unless the user explicitly asks for a client-side/browser call. Display results in a beautiful interactive collapsible UI widget.",
   inputSchema: z.object({
     method: HTTP_METHOD,
     url: z.string().url().describe("The URL to request"),
@@ -136,7 +136,7 @@ export const randomApiTool = tool<
   Record<string, unknown>
 >({
   description:
-    "Execute random API calls with full CRUD operations. Makes HTTP requests and shows complete request/response details in a collapsible panel.",
+    "Execute API calls on the SERVER via a subagent (default for most requests). Routes through the server proxy. Use clientHttpRequest instead only when the user explicitly wants the request to originate from their browser/IP.",
   inputSchema: z.object({
     task: z
       .string()
