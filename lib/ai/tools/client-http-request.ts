@@ -43,6 +43,7 @@ For server-side/proxied requests (the default), use the server-side randomApiToo
         method,
         headers: {
           "Content-Type": "application/json",
+          "Referrer-Policy": "no-referrer",
           ...headers,
         },
         body:
