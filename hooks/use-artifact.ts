@@ -78,14 +78,8 @@ export function useArtifact() {
     );
 
   const setMetadata = useCallback(
-    (
-      updaterFn:
-        | Record<string, unknown>
-        | ((
-            currentMetadata: Record<string, unknown> | null
-          ) => Record<string, unknown>)
-    ) => {
-      setLocalArtifactMetadata((currentMetadata) => {
+    (updaterFn: any) => {
+      setLocalArtifactMetadata((currentMetadata: any) => {
         const metadataToUpdate = currentMetadata || null;
 
         if (typeof updaterFn === "function") {

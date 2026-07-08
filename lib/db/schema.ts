@@ -95,7 +95,16 @@ export const document = chatbot.table(
     title: text("title").notNull(),
     content: text("content"),
     kind: varchar("text", {
-      enum: ["text", "code", "image", "sheet", "svg", "html", "diagram"],
+      enum: [
+        "text",
+        "code",
+        "image",
+        "sheet",
+        "svg",
+        "html",
+        "diagram",
+        "video",
+      ],
     })
       .notNull()
       .default("text"),

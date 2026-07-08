@@ -9,24 +9,32 @@ import { researchSubagent } from "@/lib/ai/subagents/research";
  * - Users see the full subagent execution streamed in real time
  * - The main agent receives only a concise summary via toModelOutput
  */
-const executeResearch = async function* (
+const executeResearch = async (
   { task }: { task: string },
-  { abortSignal }: { abortSignal: AbortSignal }
-) {
+  { abortSignal }: { abortSignal?: AbortSignal }
+) => {
   const result = await researchSubagent.stream({
     prompt: task,
     abortSignal,
   });
 
+  let lastMessage: any = null;
+
   // eslint-disable-next-line no-restricted-syntax
   for await (const message of readUIMessageStream({
     stream: toUIMessageStream({ stream: result.stream }),
   })) {
-    yield message;
+    lastMessage = message;
   }
+
+  return lastMessage;
 };
 
-export const researchTool = tool({
+export const researchTool = tool<
+  { task: string },
+  any,
+  Record<string, unknown>
+>({
   description:
     "Research a topic by searching the web, extracting relevant pages, and returning a synthesized answer. Use this for questions that require current information, factual lookups, or multi-source research. Takes longer than normal tools, but provides real-time progress updates.",
   inputSchema: z.object({

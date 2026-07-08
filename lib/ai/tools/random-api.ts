@@ -108,24 +108,32 @@ export type RandomApiSubagentMessage = InferAgentUIMessage<
   typeof randomApiSubagent
 >;
 
-const executeRandomApi = async function* (
+const executeRandomApi = async (
   { task }: { task: string },
-  { abortSignal }: { abortSignal: AbortSignal }
-) {
+  { abortSignal }: { abortSignal?: AbortSignal }
+) => {
   const result = await randomApiSubagent.stream({
     prompt: task,
     abortSignal,
   });
 
+  let lastMessage: any = null;
+
   // eslint-disable-next-line no-restricted-syntax
   for await (const message of readUIMessageStream({
     stream: toUIMessageStream({ stream: result.stream }),
   })) {
-    yield message;
+    lastMessage = message;
   }
+
+  return lastMessage;
 };
 
-export const randomApiTool = tool({
+export const randomApiTool = tool<
+  { task: string },
+  any,
+  Record<string, unknown>
+>({
   description:
     "Execute random API calls with full CRUD operations. Makes HTTP requests and shows complete request/response details in a collapsible panel.",
   inputSchema: z.object({
