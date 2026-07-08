@@ -1009,6 +1009,25 @@ export const ShareIcon = ({ size = 16 }: { size?: number }) => {
   );
 };
 
+export const ExternalLinkIcon = ({ size = 16 }: { size?: number }) => {
+  return (
+    <svg
+      height={size}
+      strokeLinejoin="round"
+      style={{ color: "currentcolor" }}
+      viewBox="0 0 16 16"
+      width={size}
+    >
+      <path
+        clipRule="evenodd"
+        d="M8 0H7V1H8V0ZM8 15V16H7V15H1.586L0.293 13.707L1.707 12.293L3 13.586L3 9H9V6H6V5H9V2H12V5H15V8H14V2H4V13H8V15ZM9 3H12.414L12 2.586L11.414 2H9V3ZM4 5V7H5V5H4ZM6 5V7H7V5H6ZM8 5V7H11V5H8ZM4 8V10H5V8H4ZM6 8V10H7V8H6ZM4 11V13H5V11H4ZM6 11V13H7V11H6ZM8 11V13H11V11H8Z"
+        fill="currentColor"
+        fillRule="evenodd"
+      />
+    </svg>
+  );
+};
+
 export const CodeIcon = ({ size = 16 }: { size?: number }) => {
   return (
     <svg

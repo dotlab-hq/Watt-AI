@@ -20,6 +20,7 @@ import { imageArtifact } from "@/artifacts/image/client";
 import { sheetArtifact } from "@/artifacts/sheet/client";
 import { svgArtifact } from "@/artifacts/svg/client";
 import { textArtifact } from "@/artifacts/text/client";
+import { videoArtifact } from "@/artifacts/video/client";
 import { ArtifactActions } from "@/components/chat/artifact-actions";
 import { ArtifactCloseButton } from "@/components/chat/artifact-close-button";
 import { LoaderIcon } from "@/components/chat/icons";
@@ -41,6 +42,7 @@ export const artifactDefinitions = [
   svgArtifact,
   htmlArtifact,
   diagramArtifact,
+  videoArtifact,
 ];
 export type ArtifactKind = (typeof artifactDefinitions)[number]["kind"];
 

@@ -77,13 +77,34 @@ export function useArtifact() {
       }
     );
 
+  const setMetadata = useCallback(
+    (
+      updaterFn:
+        | Record<string, unknown>
+        | ((
+            currentMetadata: Record<string, unknown> | null
+          ) => Record<string, unknown>)
+    ) => {
+      setLocalArtifactMetadata((currentMetadata) => {
+        const metadataToUpdate = currentMetadata || null;
+
+        if (typeof updaterFn === "function") {
+          return updaterFn(metadataToUpdate);
+        }
+
+        return updaterFn;
+      });
+    },
+    [setLocalArtifactMetadata]
+  );
+
   return useMemo(
     () => ({
       artifact,
       setArtifact,
       metadata: localArtifactMetadata,
-      setMetadata: setLocalArtifactMetadata,
+      setMetadata,
     }),
-    [artifact, setArtifact, localArtifactMetadata, setLocalArtifactMetadata]
+    [artifact, setArtifact, localArtifactMetadata, setMetadata]
   );
 }
