@@ -429,7 +429,7 @@ const PurePreviewMessage = ({
     }
 
     // Client-side HTTP request tool (no proxy, runs in browser)
-    if (type === "tool-clientHttpRequest") {
+    if ((type as string) === "tool-clientHttpRequest") {
       const toolPart = part as {
         toolCallId: string;
         state: string;
