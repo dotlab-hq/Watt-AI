@@ -428,6 +428,29 @@ const PurePreviewMessage = ({
       return null;
     }
 
+    // Client-side HTTP request tool (no proxy, runs in browser)
+    if (type === "tool-clientHttpRequest") {
+      const toolPart = part as {
+        toolCallId: string;
+        state: string;
+        output?: unknown;
+      };
+      const { toolCallId, state } = toolPart;
+
+      if (state === "output-available" && toolPart.output) {
+        return (
+          <RandomApi
+            key={toolCallId}
+            result={
+              toolPart.output as Parameters<typeof RandomApi>[0]["result"]
+            }
+          />
+        );
+      }
+
+      return null;
+    }
+
     return null;
   });
 

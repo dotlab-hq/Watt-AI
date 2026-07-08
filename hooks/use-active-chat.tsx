@@ -23,6 +23,7 @@ import { toast } from "@/components/chat/toast";
 import type { VisibilityType } from "@/components/chat/visibility-selector";
 import { useAutoResume } from "@/hooks/use-auto-resume";
 import { DEFAULT_CHAT_MODEL } from "@/lib/ai/models";
+import { clientHttpRequest } from "@/lib/ai/tools/client-http-request";
 import type { Vote } from "@/lib/db/schema";
 import { ChatbotError } from "@/lib/errors";
 import type { ChatMessage } from "@/lib/types";
@@ -147,6 +148,9 @@ export function ActiveChatProvider({ children }: { children: ReactNode }) {
             (part.approval as { approved?: boolean })?.approved === true
         ) ?? false
       );
+    },
+    tools: {
+      clientHttpRequest,
     },
     transport: new DefaultChatTransport({
       api: `${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/api/chat`,
