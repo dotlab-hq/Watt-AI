@@ -154,13 +154,15 @@ export function ActiveChatProvider({ children }: { children: ReactNode }) {
         return;
       }
       if (toolCall.toolName === "clientHttpRequest") {
-        const { method, url, headers, body, timeout } = toolCall.input as {
-          method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
-          url: string;
-          headers?: Record<string, string>;
-          body?: string;
-          timeout?: number;
-        };
+        const { method, url, headers, body, timeout, referrerPolicy } =
+          toolCall.input as {
+            method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
+            url: string;
+            headers?: Record<string, string>;
+            body?: string;
+            timeout?: number;
+            referrerPolicy?: string;
+          };
         const controller = new AbortController();
         const timeoutId = setTimeout(
           () => controller.abort(),
@@ -175,6 +177,7 @@ export function ActiveChatProvider({ children }: { children: ReactNode }) {
                 ? body
                 : undefined,
             signal: controller.signal,
+            referrerPolicy: (referrerPolicy ?? "no-referrer") as ReferrerPolicy,
           });
           const responseHeaders: Record<string, string> = {};
           response.headers.forEach((value, key) => {
@@ -193,7 +196,13 @@ export function ActiveChatProvider({ children }: { children: ReactNode }) {
             tool: "clientHttpRequest",
             toolCallId: toolCall.toolCallId,
             output: {
-              request: { method, url, headers, body: body ?? null },
+              request: {
+                method,
+                url,
+                headers,
+                body: body ?? null,
+                referrerPolicy: referrerPolicy ?? "no-referrer",
+              },
               response: {
                 status: response.status,
                 statusText: response.statusText,
