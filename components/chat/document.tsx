@@ -8,6 +8,7 @@ import {
   PencilEditIcon,
 } from "@/components/chat/icons";
 import { useArtifact } from "@/hooks/use-artifact";
+import type { Document } from "@/lib/db/schema";
 
 const getActionText = (
   type: "create" | "update" | "request-suggestions",
@@ -29,7 +30,7 @@ const getActionText = (
 
 type DocumentToolResultProps = {
   type: "create" | "update" | "request-suggestions";
-  result: { id: string; title: string; kind: ArtifactKind };
+  result: { id: string; title: string; kind: Document["kind"] };
   isReadonly: boolean;
 };
 
@@ -62,7 +63,7 @@ function PureDocumentToolResult({
 
         setArtifact((currentArtifact) => ({
           documentId: result.id,
-          kind: result.kind,
+          kind: result.kind as ArtifactKind,
           content: currentArtifact.content,
           title: result.title,
           isVisible: true,

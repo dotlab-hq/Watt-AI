@@ -30,7 +30,7 @@ import { cn, fetcher } from "@/lib/utils";
 type DocumentToolOutput = {
   id: string;
   title: string;
-  kind: ArtifactKind;
+  kind: Document["kind"];
   content?: string;
 };
 
@@ -173,7 +173,7 @@ const PureHitboxLayer = ({
         ...artifact,
         ...(result?.id && { documentId: result.id }),
         ...(result?.title && { title: result.title }),
-        ...(result?.kind && { kind: result.kind }),
+        ...(result?.kind && { kind: result.kind as ArtifactKind }),
         isVisible: true,
         boundingBox: {
           left: boundingBox.x,
