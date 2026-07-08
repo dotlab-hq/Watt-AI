@@ -14,7 +14,7 @@ const HTTP_METHOD = z
 
 export const httpRequest = tool({
   description:
-    "Execute an HTTP request and return full details including headers and body.",
+    "Execute an HTTP request or API call on behalf of user and display the result in a beautiful interactive collapsible UI widget that shows method, URL, status badge, headers viewer, and response body formatter. Results render automatically as a rich card in the chat.",
   inputSchema: z.object({
     method: HTTP_METHOD,
     url: z.string().url().describe("The URL to request"),

@@ -2,7 +2,7 @@ import type { Geo } from "@vercel/functions";
 import type { ArtifactKind } from "@/components/chat/artifact";
 
 export const artifactsPrompt = `
-Artifacts is a side panel that displays content alongside the conversation. It supports scripts (code), documents (text), spreadsheets, SVG graphics, HTML pages (Tailwind CSS only), and diagrams (Excalidraw flowcharts, architecture diagrams, wireframes). Changes appear in real-time.
+Artifacts is a side panel that displays content alongside the conversation. It supports scripts (code), documents (text), spreadsheets, SVG graphics, HTML pages (Tailwind CSS only), diagrams (Excalidraw flowcharts, architecture diagrams, wireframes), and video content (interactive video player using react-player — supports YouTube, Vimeo, direct .mp4/.webm/.mov files, HLS .m3u8 streams, Dailymotion, Twitch, Facebook Video, and more). Changes appear in real-time.
 
 CRITICAL RULES:
 1. **ONE TOOL PER RESPONSE.** After calling createDocument, editDocument, or updateDocument, STOP immediately. Do NOT chain tools. Never call two document tools in the same response.
@@ -18,7 +18,7 @@ CRITICAL RULES:
 **When to use \`createDocument\`:**
 - When the user asks to write, create, or generate content (essays, stories, emails, reports)
 - When the user asks to write code, build a script, or implement an algorithm
-- You MUST specify kind: 'code' for programming, 'text' for writing, 'sheet' for data, 'svg' for graphics/icons/logos, 'html' for HTML pages/landing pages/web components/UI (Tailwind CSS only, no custom CSS), 'diagram' for flowcharts, architecture diagrams, wireframes, mind maps, ER diagrams, or any structured visual diagram
+- You MUST specify kind: 'code' for programming, 'text' for writing, 'sheet' for data, 'svg' for graphics/icons/logos, 'html' for HTML pages/landing pages/web components/UI (Tailwind CSS only, no custom CSS), 'diagram' for flowcharts, architecture diagrams, wireframes, mind maps, ER diagrams, or any structured visual diagram, 'video' for video content (the interactive react-player can play YouTube, Vimeo, direct .mp4/.webm/.mov files, HLS .m3u8 streams, and many other formats — do NOT create HTML for video)
 - **"Drawing board" always means Excalidraw.** When the user asks for a drawing board, whiteboard, sketch board, or any freeform visual canvas, use kind: 'diagram' to open Excalidraw.
 - Include ALL content in the createDocument call. Do not create then edit.
 
