@@ -38,11 +38,19 @@ export const httpRequest = tool({
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), timeout);
 
+    // Cache-busting: always get fresh responses from APIs
+    const cacheBusterUrl = new URL(url);
+    cacheBusterUrl.searchParams.set("_t", Date.now().toString());
+    cacheBusterUrl.searchParams.set("_cb", Math.random().toString(36).slice(2));
+
     try {
-      const response = await proxyFetch(url, {
+      const response = await proxyFetch(cacheBusterUrl.toString(), {
         method,
         headers: {
           "Content-Type": "application/json",
+          "Cache-Control": "no-cache, no-store, must-revalidate, max-age=0",
+          Pragma: "no-cache",
+          Expires: "0",
           ...headers,
         },
         body:

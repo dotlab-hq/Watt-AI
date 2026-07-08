@@ -59,18 +59,25 @@ For server-side/proxied requests (the default), use the server-side randomApiToo
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), timeout);
 
+    // Cache-busting: always get fresh responses from APIs
+    const cacheBusterUrl = new URL(url);
+    cacheBusterUrl.searchParams.set("_t", Date.now().toString());
+    cacheBusterUrl.searchParams.set("_cb", Math.random().toString(36).slice(2));
+
     try {
-      const response = await fetch(url, {
+      const response = await fetch(cacheBusterUrl.toString(), {
         method,
         headers: {
           "Content-Type": "application/json",
+          "Cache-Control": "no-cache, no-store, must-revalidate, max-age=0",
+          Pragma: "no-cache",
+          Expires: "0",
           ...headers,
         },
         body:
           body && ["POST", "PUT", "PATCH"].includes(method) ? body : undefined,
         signal: controller.signal,
-
-        // ✅ Correct place for controlling Referer
+        cache: "no-store",
         referrerPolicy,
       });
 

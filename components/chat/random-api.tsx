@@ -63,18 +63,14 @@ function BodyViewer({ body }: { body: unknown }) {
 
   const content =
     typeof body === "string" ? body : JSON.stringify(body, null, 2);
-  const truncated =
-    content.length > 2000
-      ? `${content.slice(0, 2000)}\n... (truncated)`
-      : content;
 
   return (
     <div className="mt-2">
       <h5 className="text-xs font-medium text-muted-foreground uppercase">
         Body
       </h5>
-      <pre className="mt-1 max-h-48 overflow-y-auto rounded-md bg-muted/30 p-2 text-xs">
-        {truncated}
+      <pre className="mt-1 max-h-96 overflow-auto rounded-md bg-muted/30 p-2 text-xs">
+        {content}
       </pre>
     </div>
   );
