@@ -7,6 +7,7 @@ import {
 } from "ai";
 import { z } from "zod";
 import { getLanguageModel } from "@/lib/ai/providers";
+import { proxyFetch } from "@/lib/proxy-fetch";
 
 const HTTP_METHOD = z
   .enum(["GET", "POST", "PUT", "PATCH", "DELETE"])
@@ -38,7 +39,7 @@ export const httpRequest = tool({
     const timeoutId = setTimeout(() => controller.abort(), timeout);
 
     try {
-      const response = await fetch(url, {
+      const response = await proxyFetch(url, {
         method,
         headers: {
           "Content-Type": "application/json",
