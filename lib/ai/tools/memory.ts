@@ -130,7 +130,7 @@ export function createMemoryTools(params: {
               chatId,
               tier: tier as MemoryTier,
               query,
-              embedding,
+              embedding: embedding ?? undefined,
               maxResults,
               projectId,
             });
@@ -153,7 +153,7 @@ export function createMemoryTools(params: {
                 chatId,
                 tier: t,
                 query,
-                embedding,
+                embedding: embedding ?? undefined,
                 maxResults: 5,
                 projectId,
               });
