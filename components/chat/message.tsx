@@ -146,19 +146,27 @@ const PurePreviewMessage = ({
       className="flex flex-row justify-end gap-2"
       data-testid={"message-attachments"}
     >
-      {attachmentsFromMessage.map((attachment) => (
-        <PreviewAttachment
-          attachment={{
-            name: attachment.filename ?? "file",
-            contentType: attachment.mediaType,
-            url: attachment.url,
-            providerReference: attachment.providerReference,
-          }}
-          key={
-            attachment.url ?? `${attachment.filename}-${attachment.mediaType}`
-          }
-        />
-      ))}
+      {attachmentsFromMessage.map((attachment) => {
+        const name =
+          "name" in attachment && typeof attachment.name === "string"
+            ? attachment.name
+            : "filename" in attachment &&
+                typeof attachment.filename === "string"
+              ? attachment.filename
+              : "file";
+
+        return (
+          <PreviewAttachment
+            attachment={{
+              name,
+              contentType: attachment.mediaType,
+              url: attachment.url,
+              providerReference: attachment.providerReference,
+            }}
+            key={attachment.url ?? `${name}-${attachment.mediaType}`}
+          />
+        );
+      })}
     </div>
   );
 
@@ -172,14 +180,17 @@ const PurePreviewMessage = ({
       if (part.type === "reasoning" && part.text?.trim().length > 0) {
         const providerMetadata = (
           part as {
-            providerMetadata?: { chatbot?: { thinkingDurationSeconds?: number } };
+            providerMetadata?: {
+              chatbot?: { thinkingDurationSeconds?: number };
+            };
           }
         ).providerMetadata;
         return {
           text: acc.text ? `${acc.text}\n\n${part.text}` : part.text,
           isStreaming: "state" in part ? part.state === "streaming" : false,
           durationSeconds:
-            providerMetadata?.chatbot?.thinkingDurationSeconds ?? acc.durationSeconds,
+            providerMetadata?.chatbot?.thinkingDurationSeconds ??
+            acc.durationSeconds,
           rendered: false,
         };
       }
@@ -249,7 +260,7 @@ const PurePreviewMessage = ({
       type === "tool-localTime" ||
       type === "tool-playVideo"
     ) {
-      const { toolCallId, state } = part;
+      const { state } = part;
       const approvalId = (part as { approval?: { id: string } }).approval?.id;
       const isDenied =
         state === "output-denied" ||
@@ -379,8 +390,6 @@ const PurePreviewMessage = ({
       if (index !== lastCreateDocIndex) {
         return null;
       }
-      const { toolCallId } = part;
-
       if (part.output && "error" in part.output) {
         return (
           <div
@@ -402,8 +411,6 @@ const PurePreviewMessage = ({
     }
 
     if (type === "tool-updateDocument") {
-      const { toolCallId } = part;
-
       if (part.output && "error" in part.output) {
         return (
           <div
@@ -427,14 +434,10 @@ const PurePreviewMessage = ({
     }
 
     if (type === "tool-requestSuggestions") {
-      const { toolCallId, state } = part;
+      const { state } = part;
 
       return (
-        <Tool
-          className="w-[min(100%,450px)]"
-          defaultOpen={true}
-          key={key}
-        >
+        <Tool className="w-[min(100%,450px)]" defaultOpen={true} key={key}>
           <ToolHeader state={state} type="tool-requestSuggestions" />
           <ToolContent>
             {state === "input-available" && <ToolInput input={part.input} />}
@@ -456,7 +459,7 @@ const PurePreviewMessage = ({
     }
 
     if (type === "tool-renderCards") {
-      const { toolCallId, state } = part;
+      const { state } = part;
 
       if (state === "output-available" && part.output) {
         return <CardCarousel data={part.output} key={key} />;
@@ -466,7 +469,7 @@ const PurePreviewMessage = ({
     }
 
     if (type === "tool-clientHttpRequest") {
-      const { toolCallId, state } = part;
+      const { state } = part;
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const p = part as any;
       const inp = p.input as
@@ -531,11 +534,7 @@ const PurePreviewMessage = ({
       };
 
       return (
-        <Tool
-          className="w-[min(100%,650px)]"
-          defaultOpen={false}
-          key={key}
-        >
+        <Tool className="w-[min(100%,650px)]" defaultOpen={false} key={key}>
           <ToolHeader
             state={state}
             title={

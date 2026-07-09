@@ -453,7 +453,14 @@ export async function POST(request: Request) {
             ? {
                 ...finishedMessage,
                 parts: finishedMessage.parts.map((part) =>
-                  part.type === "reasoning"
+                  part.type === "reasoning" &&
+                  !(
+                    part as {
+                      providerMetadata?: {
+                        chatbot?: { thinkingDurationSeconds?: number };
+                      };
+                    }
+                  ).providerMetadata?.chatbot?.thinkingDurationSeconds
                     ? {
                         ...part,
                         providerMetadata: {
