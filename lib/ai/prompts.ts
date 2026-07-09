@@ -341,9 +341,9 @@ You have two HTTP request tools — choose the right one based on where the requ
 export const systemPrompt = ({
   requestHints,
   supportsTools,
-  hasProject,
+  _hasProject,
   hasMemory,
-  hasSearchTools,
+  _hasSearchTools,
   personalization,
   toolPromptSections,
   toolPlanSummary,

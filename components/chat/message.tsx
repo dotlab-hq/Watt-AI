@@ -13,7 +13,6 @@ import {
   ToolContent,
   ToolHeader,
   ToolInput,
-  ToolOutput,
   type ToolPart,
 } from "@/components/ai-elements/tool";
 import type { ActivityItem } from "@/components/chat/activity-panel-context";
@@ -546,24 +545,18 @@ const PurePreviewMessage = ({
           <ToolHeader state={state} type="tool-requestSuggestions" />
           <ToolContent>
             {state === "input-available" && <ToolInput input={part.input} />}
-            {state === "output-available" && (
-              <ToolOutput
-                errorText={undefined}
-                output={
-                  "error" in part.output ? (
-                    <div className="rounded border p-2 text-red-500">
-                      Error: {String(part.output.error)}
-                    </div>
-                  ) : (
-                    <DocumentToolResult
-                      isReadonly={isReadonly}
-                      result={part.output}
-                      type="request-suggestions"
-                    />
-                  )
-                }
-              />
-            )}
+            {state === "output-available" &&
+              ("error" in part.output ? (
+                <div className="rounded border p-2 text-red-500">
+                  Error: {String(part.output.error)}
+                </div>
+              ) : (
+                <DocumentToolResult
+                  isReadonly={isReadonly}
+                  result={part.output}
+                  type="request-suggestions"
+                />
+              ))}
           </ToolContent>
         </Tool>
       );
@@ -661,10 +654,9 @@ const PurePreviewMessage = ({
           />
           <ToolContent>
             {state === "output-error" && (
-              <ToolOutput
-                errorText={errText ?? "Request failed"}
-                output={null}
-              />
+              <div className="rounded-md bg-destructive/10 p-3 text-destructive text-xs">
+                {errText ?? "Request failed"}
+              </div>
             )}
             {state === "output-available" && out?.results && (
               <div className="space-y-4">
@@ -715,25 +707,20 @@ const PurePreviewMessage = ({
                                   : ""}
                             </span>
                           </div>
-                          <ToolOutput
-                            errorText={undefined}
-                            output={
-                              result.response?.body ? (
-                                <CodeBlock
-                                  code={JSON.stringify(
-                                    result.response.body,
-                                    null,
-                                    2
-                                  )}
-                                  language="json"
-                                />
-                              ) : (
-                                <span className="text-muted-foreground text-sm">
-                                  No response body
-                                </span>
-                              )
-                            }
-                          />
+                          {result.response?.body ? (
+                            <CodeBlock
+                              code={JSON.stringify(
+                                result.response.body,
+                                null,
+                                2
+                              )}
+                              language="json"
+                            />
+                          ) : (
+                            <span className="text-muted-foreground text-sm">
+                              No response body
+                            </span>
+                          )}
                         </div>
                       )}
                     </div>
@@ -797,11 +784,10 @@ const PurePreviewMessage = ({
               toolPart.input !== undefined && (
                 <ToolInput input={toolPart.input as ToolPart["input"]} />
               )}
-            {(state === "output-available" || state === "output-error") && (
-              <ToolOutput
-                errorText={toolPart.errorText}
-                output={toolPart.output as ToolPart["output"]}
-              />
+            {state === "output-error" && (
+              <div className="rounded-md bg-destructive/10 p-3 text-destructive text-xs">
+                {toolPart.errorText ?? "An error occurred"}
+              </div>
             )}
           </ToolContent>
         </Tool>
