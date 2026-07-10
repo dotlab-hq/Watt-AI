@@ -2,6 +2,7 @@
 import type { UseChatHelpers } from "@ai-sdk/react";
 import { ChevronDownIcon } from "lucide-react";
 import { useState } from "react";
+import type { DynamicToolUIPart } from "ai";
 import { CodeBlock } from "@/components/ai-elements/code-block";
 import {
   MessageContent,
@@ -658,16 +659,23 @@ const PurePreviewMessage = ({
     if (isMCPAppPart(part)) {
       const appMeta = getMCPAppMetadata(part);
       if (appMeta) {
-        const { state } = part as { state?: string };
+        const state = (part as { state?: string }).state ?? "input-available";
         const widthClass = "w-[min(100%,650px)]";
         const partType = (part as { type?: string }).type || "dynamic-tool";
+        const toolName =
+          (part as { toolName?: string }).toolName ?? "mcp-app";
+        const toolInput =
+          (part as { input?: Record<string, unknown> }).input ?? {};
+        const toolOutput = (part as { output?: unknown }).output;
+        const toolCallId = (part as { toolCallId?: string }).toolCallId ?? "";
 
         if (state === "output-available") {
           return (
             <div className={widthClass} key={key}>
               <Tool className="w-full" defaultOpen={true}>
-                <ToolHeader state={state} type={partType as any} />
+                <ToolHeader state={state} type={partType as "dynamic-tool"} toolName={toolName} />
                 <ToolContent>
+                  <ToolInput input={toolInput} />
                   <MCPAppRenderer
                     handlers={{
                       callTool: async (params) => {
@@ -686,10 +694,10 @@ const PurePreviewMessage = ({
                         return response.json();
                       },
                     }}
-                    input={part.input}
+                    input={toolInput}
                     metadata={appMeta}
-                    output={part.output}
-                    toolCallId={part.toolCallId}
+                    output={toolOutput}
+                    toolCallId={toolCallId}
                   />
                 </ToolContent>
               </Tool>
@@ -701,9 +709,9 @@ const PurePreviewMessage = ({
         return (
           <div className={widthClass} key={key}>
             <Tool className="w-full" defaultOpen={true}>
-              <ToolHeader state={state} type={partType as any} />
+              <ToolHeader state={state as DynamicToolUIPart["state"]} type="dynamic-tool" toolName={toolName} />
               <ToolContent>
-                <ToolInput input={part.input} />
+                <ToolInput input={toolInput} />
                 <div className="px-4 py-3 text-muted-foreground text-sm">
                   Loading MCP App...
                 </div>

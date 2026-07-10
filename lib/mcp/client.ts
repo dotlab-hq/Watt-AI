@@ -27,14 +27,13 @@ export async function connectToMcpServer(server: McpServer) {
     const transport = buildTransport(server);
 
     // Extract headers from server configuration and apply them to the MCP client
-    const mcpHeaders: Record<string, string> = server.headers || {};
+    const mcpHeaders = server.headers ?? undefined;
 
     const client = await createMCPClient({
       transport,
       maxRetries: 2,
       clientName: "chatbot",
       version: "1.0.0",
-      headers: mcpHeaders,
       capabilities: mcpAppClientCapabilities,
     });
 
@@ -92,14 +91,13 @@ function buildTransport(server: McpServer) {
         command: server.command,
         args: server.args ?? [],
         env: server.env ?? undefined,
-        headers: server.headers ?? undefined,
       });
     }
     case "sse":
       if (!server.url) {
         throw new Error("SSE transport requires a URL");
       }
-      return { type: "sse" as const, url: server.url, headers: server.headers };
+      return { type: "sse" as const, url: server.url, headers: server.headers === null ? undefined : server.headers };
     case "streamable-http":
       if (!server.url) {
         throw new Error("Streamable HTTP transport requires a URL");
@@ -107,7 +105,7 @@ function buildTransport(server: McpServer) {
       return {
         type: "http" as const,
         url: server.url,
-        headers: server.headers,
+        headers: server.headers === null ? undefined : server.headers,
       };
     default:
       throw new Error(`Unsupported transport: ${server.transport}`);
