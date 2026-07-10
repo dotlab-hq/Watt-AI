@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { betterAuthInstance } from "@/app/(auth)/auth";
+import { betterAuthInstance, auth } from "@/app/(auth)/auth";
 
 export async function PATCH(request: Request) {
   try {
