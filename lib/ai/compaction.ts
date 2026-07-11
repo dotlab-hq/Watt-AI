@@ -189,27 +189,6 @@ ${conversationText}`,
   const summaryTokens = Math.ceil(summary.length / 4); // rough estimate
   const tokensSaved = oldTokens.totalTokens - summaryTokens;
 
-  // Create a summary message to replace the old messages
-  const summaryMessage: DBMessage = {
-    id: crypto.randomUUID(),
-    chatId,
-    role: "assistant",
-    parts: [
-      {
-        type: "text",
-        text: `[Conversation Summary — ${toSummarize.length} messages compacted]\n\n${summary}`,
-      },
-    ],
-    attachments: [],
-    createdAt: new Date(),
-    speechKey: "",
-    usage: {
-      inputTokens: 0,
-      outputTokens: summaryTokens,
-      totalTokens: summaryTokens,
-    },
-  };
-
   // Delete old messages and their votes from DB
   const oldMessageIds = toSummarize.map((m) => m.id);
   if (oldMessageIds.length > 0) {
@@ -219,9 +198,6 @@ ${conversationText}`,
     // Delete old messages
     await db.delete(message).where(eq(message.chatId, chatId));
   }
-
-  // Insert the summary message
-  await db.insert(message).values(summaryMessage);
 
   // Keep the recent messages (they need to be re-saved since we deleted all for this chat)
   for (const msg of toKeep) {
@@ -245,50 +221,3 @@ ${conversationText}`,
   };
 }
 
-/**
- * Get the compacted messages with the summary prepended.
- * Used when loading messages after compaction.
- */
-export function buildMessagesWithCompaction(
-  messages: DBMessage[],
-  compactionSummary: string | null
-): DBMessage[] {
-  if (!compactionSummary || messages.length === 0) {
-    return messages;
-  }
-
-  // Check if there's already a summary message in the conversation
-  const hasSummary = messages.some(
-    (m) =>
-      m.role === "system" &&
-      typeof m.parts === "object" &&
-      Array.isArray(m.parts) &&
-      (m.parts as any[]).some(
-        (p: any) =>
-          p.type === "text" && p.text?.startsWith("[Conversation Summary")
-      )
-  );
-
-  if (hasSummary) {
-    return messages;
-  }
-
-  // Prepend the summary as an assistant message (AI SDK rejects system role in messages array)
-  const summaryMessage: DBMessage = {
-    id: crypto.randomUUID(),
-    chatId: messages[0]?.chatId ?? "",
-    role: "assistant",
-    parts: [
-      {
-        type: "text",
-        text: `[Conversation Summary]\n\n${compactionSummary}`,
-      },
-    ],
-    attachments: [],
-    createdAt: new Date(0),
-    speechKey: "",
-    usage: null,
-  };
-
-  return [summaryMessage, ...messages];
-}

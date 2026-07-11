@@ -399,6 +399,7 @@ export const systemPrompt = ({
   toolPromptSections,
   toolPlanSummary,
   sessionContext,
+  compactionSummary,
 }: {
   requestHints: RequestHints;
   supportsTools: boolean;
@@ -412,10 +413,16 @@ export const systemPrompt = ({
     contextManagement: string[];
   };
   sessionContext?: string;
+  compactionSummary?: string | null;
 }) => {
   const requestPrompt = getRequestPromptFromHints(requestHints);
 
   let prompt = regularPrompt;
+
+  // Compaction summary (invisible to user, only in system prompt for LLM)
+  if (compactionSummary) {
+    prompt += `\n\n## Conversation History Summary\nEarlier messages in this conversation were summarized to save context. Here is the summary:\n\n${compactionSummary}`;
+  }
 
   // Session context from memory (for long conversations)
   if (sessionContext) {

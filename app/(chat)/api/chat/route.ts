@@ -299,6 +299,9 @@ export async function POST(request: Request) {
     // For long conversations, build compact context from session memory
     // instead of passing full message history. This saves context window space.
 
+    // Compaction summary (invisible to user, only shown to LLM via system prompt)
+    const compactionSummary = chat?.compactionSummary ?? null;
+
     let sessionContext = "";
     if (process.env.MONGODB_URI) {
       try {
@@ -456,6 +459,7 @@ export async function POST(request: Request) {
             contextManagement: toolPlan.contextManagement,
           },
           sessionContext,
+          compactionSummary,
         });
 
         const { agent } = await createChatAgent({

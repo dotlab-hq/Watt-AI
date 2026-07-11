@@ -159,11 +159,11 @@ export function VideoPlayer({
       const videoId = videoUrl.includes("v=")
         ? videoUrl.split("v=")[1].split("&")[0]
         : videoUrl.split("/").pop();
-      return `https://www.youtube.com/embed/${videoId}?autoplay=${isPlaying ? 1 : 0}&mute=${isMuted ? 1 : 0}`;
+      return `https://www.youtube.com/embed/${videoId}`;
     }
     if (videoUrl.includes("vimeo.com")) {
       const videoId = videoUrl.split("/").pop();
-      return `https://player.vimeo.com/video/${videoId}?autoplay=${isPlaying ? 1 : 0}&muted=${isMuted ? 1 : 0}`;
+      return `https://player.vimeo.com/video/${videoId}`;
     }
     if (videoUrl.includes("mux.com")) {
       return `https://stream.mux.com/${videoUrl.split("/")[4]}.m3u8`;
@@ -174,9 +174,9 @@ export function VideoPlayer({
   const isThirdPartyVideo =
     videoUrl.includes("youtube.com") ||
     videoUrl.includes("youtu.be") ||
-    videoUrl.includes("vimeo.com") ||
-    videoUrl.includes("mux.com");
+    videoUrl.includes("vimeo.com");
 
+  // YouTube/Vimeo: standalone iframe with native controls
   if (isThirdPartyVideo) {
     return (
       <div
@@ -184,34 +184,17 @@ export function VideoPlayer({
           "relative w-full overflow-hidden rounded-lg border bg-background",
           className
         )}
-        ref={containerRef}
-        style={{ width: `${width}px`, height: `${height}px` }}
       >
-        <iframe
-          allow="autoplay; fullscreen; picture-in-picture"
-          allowFullScreen
-          className="absolute inset-0"
-          frameBorder="0"
-          height="100%"
-          src={getVideoSource()}
-          title={title || "Video Player"}
-          width="100%"
-        />
-        {isLoading && (
-          <div className="absolute inset-0 flex items-center justify-center bg-black/20">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white" />
-          </div>
-        )}
-        {error && (
-          <div className="absolute inset-0 flex items-center justify-center bg-black/50 text-white p-4">
-            <div className="text-center">
-              <p className="font-semibold mb-2">Error: {error}</p>
-              <p className="text-sm">
-                Please check the video URL or try again later.
-              </p>
-            </div>
-          </div>
-        )}
+        <div className="aspect-video bg-black">
+          <iframe
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+            allowFullScreen
+            className="w-full h-full"
+            frameBorder="0"
+            src={getVideoSource()}
+            title={title || "Video Player"}
+          />
+        </div>
       </div>
     );
   }

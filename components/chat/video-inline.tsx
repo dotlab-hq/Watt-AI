@@ -108,13 +108,13 @@ export function VideoInline({ videoUrl, title }: VideoInlineProps) {
       /(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\s]+)/
     );
     if (youtubeMatch?.[1]) {
-      return `https://www.youtube.com/embed/${youtubeMatch[1]}?autoplay=1`;
+      return `https://www.youtube.com/embed/${youtubeMatch[1]}`;
     }
 
     // Handle Vimeo
     const vimeoMatch = url.match(/vimeo\.com\/(\d+)/);
     if (vimeoMatch?.[1]) {
-      return `https://player.vimeo.com/video/${vimeoMatch[1]}?autoplay=1`;
+      return `https://player.vimeo.com/video/${vimeoMatch[1]}`;
     }
 
     // For direct video files or other URLs, try to use it directly
@@ -143,107 +143,49 @@ export function VideoInline({ videoUrl, title }: VideoInlineProps) {
   }
 
   const embedUrl = getVideoEmbedUrl(videoUrl);
-  const isVideoFile =
-    !embedUrl.includes("youtube.com") && !embedUrl.includes("vimeo.com");
+  const isThirdParty =
+    embedUrl.includes("youtube.com") || embedUrl.includes("vimeo.com");
 
+  // YouTube/Vimeo: standalone iframe with native controls
+  if (isThirdParty && isClient) {
+    return (
+      <div className="w-full max-w-2xl mx-auto rounded-2xl border border-border/50 bg-black overflow-hidden">
+        <div className="aspect-video bg-black">
+          <iframe
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+            allowFullScreen
+            className="w-full h-full"
+            src={embedUrl}
+            title={title ?? "Video player"}
+          />
+        </div>
+      </div>
+    );
+  }
+
+  // Direct video files: custom player
   return (
     <div className="w-full max-w-2xl mx-auto rounded-2xl border border-border/50 bg-black overflow-hidden">
       <div className="relative">
         <div className="aspect-video bg-black">
-          {isVideoFile && isClient ? (
+          {isClient ? (
             <video
               className="w-full h-full object-contain"
-              controls={false}
+              controls
               onClick={handlePlayPause}
               ref={videoRef}
               src={videoUrl}
             >
               <track kind="captions" label="No captions available" src="" />
             </video>
-          ) : (
-            <iframe
-              allow="autoplay; fullscreen"
-              allowFullScreen
-              className="w-full h-full"
-              src={embedUrl}
-              title={title ?? "Video player"}
-            />
-          )}
+          ) : null}
 
           {isLoading && (
             <div className="absolute inset-0 flex items-center justify-center bg-black/50">
               <div className="text-white">Loading video...</div>
             </div>
           )}
-
-          <button
-            aria-label={isPlaying ? "Pause video" : "Play video"}
-            className="absolute bottom-4 left-4 bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-full p-3 text-white"
-            onClick={handlePlayPause}
-            type="button"
-          >
-            {isPlaying ? <PauseIcon size={20} /> : <PlayIcon size={20} />}
-          </button>
         </div>
-
-        {duration > 0 && (
-          <div className="p-4 bg-black">
-            <div className="flex items-center justify-between mb-2">
-              <div className="text-white text-sm font-mono">
-                {formatTime(currentTime)} / {formatTime(duration)}
-              </div>
-              <div className="text-white text-xs opacity-70">
-                {title || "Video"}
-              </div>
-            </div>
-
-            <input
-              aria-label="Video seek bar"
-              className="w-full h-2 bg-white/20 rounded-full cursor-pointer accent-white"
-              max={duration || 0}
-              min={0}
-              onChange={(e) => {
-                const newTime = Number.parseFloat(e.target.value);
-                if (videoRef.current) {
-                  videoRef.current.currentTime = newTime;
-                }
-              }}
-              step={0.1}
-              type="range"
-              value={currentTime}
-            />
-
-            <div className="flex items-center justify-between mt-3">
-              <button
-                aria-label={isMuted ? "Unmute" : "Mute"}
-                className="text-white hover:text-white/80"
-                onClick={toggleMute}
-                type="button"
-              >
-                {isMuted ? (
-                  <VolumeXIcon size={16} />
-                ) : (
-                  <Volume2Icon size={16} />
-                )}
-              </button>
-
-              <div className="flex items-center gap-2">
-                <input
-                  aria-label="Volume"
-                  className="w-20 h-1 bg-white/20 rounded-full cursor-pointer"
-                  max="1"
-                  min="0"
-                  onChange={(e) =>
-                    handleVolumeChange([Number.parseFloat(e.target.value)])
-                  }
-                  step="0.1"
-                  type="range"
-                  value={volume}
-                />
-              </div>
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );
