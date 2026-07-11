@@ -11,7 +11,13 @@ import { db } from "./db";
 
 export async function saveMessages({ messages }: { messages: DBMessage[] }) {
   try {
-    return await db.insert(message).values(messages);
+    const chatIds = [...new Set(messages.map((m) => m.chatId))];
+    await db.insert(message).values(messages);
+    // Update updatedAt on each chat so recency sort reflects latest activity
+    await db
+      .update(chat)
+      .set({ updatedAt: new Date() })
+      .where(inArray(chat.id, chatIds));
   } catch (error) {
     console.error("[db] saveMessages failed:", error);
     throw new ChatbotError("bad_request:database", "Failed to save messages");

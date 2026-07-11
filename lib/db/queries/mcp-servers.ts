@@ -102,8 +102,8 @@ export async function updateMcpServer({
   url?: string;
   command?: string;
   args?: string[];
-  env?: Record<string, string>;
-  headers?: Record<string, string>;
+  env?: Record<string, string> | null;
+  headers?: Record<string, string> | null;
   enabled?: boolean;
 }): Promise<McpServer | null> {
   try {

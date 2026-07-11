@@ -1,16 +1,4 @@
-/**
- * Session Memory Tracker
- *
- * Auto-saves session and scratchpad memories during conversation lifecycle.
- * This ensures the AI maintains context across long conversations without
- * hitting context limits, using memory instead of full message history.
- *
- * Session Memory: Stores conversation summaries, key decisions, and progress.
- * Scratchpad Memory: Stores active working state, tool results, and task progress.
- */
-
-import { type ModelMessage } from "ai";
-import { embedQuery, type MemoryTier, saveMemory, searchMemories } from "@/lib/ai/memory";
+import { embedQuery, saveMemory, searchMemories } from "@/lib/ai/memory";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -100,7 +88,9 @@ export async function summarizeAndSaveSessionContext(params: {
 }): Promise<void> {
   const { userId, chatId, projectId, messages, summaryIndex } = params;
 
-  if (messages.length === 0) return;
+  if (messages.length === 0) {
+    return;
+  }
 
   // Build a compact summary of recent messages
   const recentMessages = messages.slice(-10); // Last 10 messages
@@ -111,7 +101,7 @@ export async function summarizeAndSaveSessionContext(params: {
     // Truncate long messages
     const content =
       msg.content.length > 200
-        ? msg.content.slice(0, 200) + "..."
+        ? `${msg.content.slice(0, 200)}...`
         : msg.content;
     summaryParts.push(`${role}: ${content}`);
   }
@@ -165,10 +155,21 @@ export async function trackToolExecution(params: {
   success: boolean;
   durationMs?: number;
 }): Promise<void> {
-  const { userId, chatId, projectId, toolName, input, result, success, durationMs } = params;
+  const {
+    userId,
+    chatId,
+    projectId,
+    toolName,
+    input,
+    result,
+    success,
+    durationMs,
+  } = params;
 
-  const inputStr = typeof input === "string" ? input : JSON.stringify(input).slice(0, 200);
-  const resultStr = typeof result === "string" ? result : JSON.stringify(result).slice(0, 300);
+  const inputStr =
+    typeof input === "string" ? input : JSON.stringify(input).slice(0, 200);
+  const resultStr =
+    typeof result === "string" ? result : JSON.stringify(result).slice(0, 300);
 
   const content = [
     `Tool: ${toolName}`,
@@ -310,7 +311,10 @@ export async function buildSessionContext(params: {
   if (estimatedTokens > maxTokens) {
     // Truncate context to fit within token limit
     const maxChars = maxTokens * 4;
-    return fullContext.slice(0, maxChars) + "\n\n[Context truncated to fit token limit]";
+    return (
+      fullContext.slice(0, maxChars) +
+      "\n\n[Context truncated to fit token limit]"
+    );
   }
 
   return fullContext;
@@ -322,11 +326,10 @@ export async function buildSessionContext(params: {
  * even 3-4 very long messages can blow past the context window.
  */
 export function shouldUseSessionContext(params: {
-  messageCount: number;
   estimatedTokens: number;
   modelMaxTokens?: number;
 }): boolean {
-  const { messageCount, estimatedTokens, modelMaxTokens = 128_000 } = params;
+  const { estimatedTokens, modelMaxTokens = 128_000 } = params;
 
   // Reserve ~40% for system prompt + tools, ~60% for messages.
   // If messages exceed that budget, switch to memory-based context.

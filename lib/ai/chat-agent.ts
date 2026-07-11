@@ -10,12 +10,7 @@ import type { Session } from "@/app/(auth)/auth";
 import { chatModels, getCapabilities } from "@/lib/ai/models";
 import { createParallelTool } from "@/lib/ai/parallel-executioner";
 import { getLanguageModel } from "@/lib/ai/providers";
-import {
-  saveSessionMemory,
-  saveScratchpadMemory,
-  trackToolExecution,
-  trackTaskProgress,
-} from "@/lib/ai/session-memory-tracker";
+import { trackToolExecution } from "@/lib/ai/session-memory-tracker";
 import {
   calculator,
   clientHttpRequest,
@@ -93,7 +88,9 @@ function wrapWithMemoryTracking(
           result,
           success: true,
           durationMs: Date.now() - startTime,
-        }).catch(() => {}); // fire-and-forget
+        }).catch(() => {
+          /* non-critical tracking */
+        }); // fire-and-forget
         return result;
       } catch (error) {
         trackToolExecution({
@@ -105,7 +102,9 @@ function wrapWithMemoryTracking(
           result: error instanceof Error ? error.message : String(error),
           success: false,
           durationMs: Date.now() - startTime,
-        }).catch(() => {}); // fire-and-forget
+        }).catch(() => {
+          /* non-critical tracking */
+        }); // fire-and-forget
         throw error;
       }
     },

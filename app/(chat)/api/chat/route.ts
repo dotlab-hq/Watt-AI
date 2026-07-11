@@ -64,7 +64,7 @@ import { convertToUIMessages, generateUUID } from "@/lib/utils";
 export const maxDuration = 300;
 
 /** Rough token estimate: ~4 chars per token */
-function estimateTokens(messages: Array<unknown>) {
+function estimateTokens(messages: unknown[]) {
   return Math.round(JSON.stringify(messages).length / 4);
 }
 
@@ -277,9 +277,11 @@ export async function POST(request: Request) {
     // Tool results are kept as they contain meaningful output, but reasoning
     // chunks and tool call inputs are stripped to reduce context bloat.
 
-    const modelMessages = (await convertToModelMessages(uiMessages, {
-      ignoreIncompleteToolCalls: true,
-    })).filter((m) => m.role !== "system");
+    const modelMessages = (
+      await convertToModelMessages(uiMessages, {
+        ignoreIncompleteToolCalls: true,
+      })
+    ).filter((m) => m.role !== "system");
 
     console.log(
       "[chat-debug] 5. modelMessages built:",
@@ -309,7 +311,8 @@ export async function POST(request: Request) {
         // Token-first threshold: ~60% of 128k context = ~76k tokens for messages.
         // If we're past that, switch to session memory context.
         // Also allow manual switch via message count (20+ messages).
-        const shouldUseMemory = estimatedTokens > 20_000 || modelMessages.length > 20;
+        const shouldUseMemory =
+          estimatedTokens > 20_000 || modelMessages.length > 20;
 
         if (shouldUseMemory) {
           const { buildSessionContext } = await import(
@@ -451,7 +454,6 @@ export async function POST(request: Request) {
           supportsTools,
           hasMemory: Boolean(process.env.MONGODB_URI),
           personalization: personalizationData,
-          toolPromptSections: toolPlan.promptSections,
           toolPlanSummary: {
             groups: toolPlan.groups,
             activeTools: toolPlan.activeTools,
@@ -686,10 +688,12 @@ export async function POST(request: Request) {
                 projectId: chat?.projectId ?? projectId ?? undefined,
                 content,
                 label: `Exchange: ${userText.slice(0, 60)}`,
-              }).catch(() => {}); // fire-and-forget
+              }).catch(() => {
+                // fire-and-forget - suppressed non-critical errors
+              });
             }
           }
-        } catch {
+        } catch (_err) {
           // Non-critical, don't break the response
         }
       },

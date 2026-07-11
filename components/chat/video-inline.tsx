@@ -1,6 +1,5 @@
 "use client";
 
-import { PauseIcon, PlayIcon, Volume2Icon, VolumeXIcon } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import "./video-inline.css";
 
@@ -11,9 +10,9 @@ interface VideoInlineProps {
 
 export function VideoInline({ videoUrl, title }: VideoInlineProps) {
   const [isPlaying, setIsPlaying] = useState(false);
-  const [currentTime, setCurrentTime] = useState(0);
-  const [duration, setDuration] = useState(0);
-  const [volume, setVolume] = useState(0.7);
+  const [_currentTime, setCurrentTime] = useState(0);
+  const [_duration, setDuration] = useState(0);
+  const [_volume, setVolume] = useState(0.7);
   const [isMuted, setIsMuted] = useState(false);
   const [isClient, setIsClient] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -80,7 +79,7 @@ export function VideoInline({ videoUrl, title }: VideoInlineProps) {
     }
   };
 
-  const handleVolumeChange = (vol: number[]) => {
+  const _handleVolumeChange = (vol: number[]) => {
     const newVolume = vol[0];
     if (videoRef.current) {
       videoRef.current.volume = newVolume;
@@ -89,14 +88,14 @@ export function VideoInline({ videoUrl, title }: VideoInlineProps) {
     }
   };
 
-  const toggleMute = () => {
+  const _toggleMute = () => {
     if (videoRef.current) {
       videoRef.current.muted = !isMuted;
       setIsMuted(!isMuted);
     }
   };
 
-  const formatTime = (time: number): string => {
+  const _formatTime = (time: number): string => {
     const minutes = Math.floor(time / 60);
     const seconds = Math.floor(time % 60);
     return `${minutes}:${seconds.toString().padStart(2, "0")}`;

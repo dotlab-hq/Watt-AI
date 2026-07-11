@@ -77,7 +77,7 @@ import {
   SidebarMenuItem,
   SidebarProvider,
 } from "@/components/ui/sidebar";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { authClient, useSession } from "@/lib/auth-client";
 
@@ -277,7 +277,6 @@ function InnerSettings({
           {activeTab === "account" && <AccountTab />}
           {activeTab === "projects" && <ProjectsTab />}
           {activeTab === "mcp-servers" && <McpTab />}
-          {activeTab === "mcp-apps" && <McpAppsTab />}
           {activeTab === "skills" && <SkillsTab />}
           {activeTab === "general" && <GeneralTab />}
           {activeTab === "personalize" && <PersonalizationTab />}
@@ -476,7 +475,10 @@ function AccountTab() {
             onClick={() => {
               authClient.signOut({
                 fetchOptions: {
-                  onSuccess: () => router.push("/login"),
+                  onSuccess: async () => {
+                    await session?.refetch();
+                    router.push("/login");
+                  },
                 },
               });
             }}
@@ -1157,7 +1159,7 @@ function McpTab() {
       const r = await fetch(`/api/mcp-servers?id=${server.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ enabled: !server.enabled }),
+        body: JSON.stringify({ id: server.id, enabled: !server.enabled }),
       });
       if (!r.ok) {
         throw new Error("MCP server toggle failed");
@@ -1279,18 +1281,12 @@ function McpTab() {
                     </div>
                   </div>
                   <div className="flex items-center gap-0.5 -mr-1">
-                    <button
+                    <Switch
                       aria-label={server.enabled ? "Disable" : "Enable"}
-                      className="rounded p-1 text-muted-foreground transition-colors hover:bg-muted"
-                      onClick={() => handleToggle(server)}
-                      type="button"
-                    >
-                      {server.enabled ? (
-                        <XIcon className="size-3.5" />
-                      ) : (
-                        <Check className="size-3.5" />
-                      )}
-                    </button>
+                      checked={server.enabled}
+                      className="ml-2"
+                      onCheckedChange={() => handleToggle(server)}
+                    />
                     <button
                       aria-label="Edit"
                       className="rounded p-1 text-muted-foreground opacity-0 transition-opacity hover:bg-muted group-hover:opacity-100"
@@ -1525,141 +1521,5 @@ function TransportBadge({ transport }: { transport: McpServer["transport"] }) {
     <Badge className="text-[10px] h-4" variant="secondary">
       {labels[transport] ?? transport}
     </Badge>
-  );
-}
-
-// ─── MCP Apps Tab ──────────────────────────────────────────────────────────
-
-function McpAppsTab() {
-  const [servers, setServers] = useState<McpServer[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const loadServers = async () => {
-      try {
-        const response = await fetch("/api/mcp-servers");
-        if (response.ok) {
-          const data = (await response.json()) as { servers: McpServer[] };
-          setServers(data.servers);
-        }
-      } catch {
-        // silent
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadServers();
-  }, []);
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <LoaderIcon className="size-5 animate-spin text-muted-foreground" />
-      </div>
-    );
-  }
-
-  return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div>
-        <h2 className="text-xl font-semibold tracking-tight">MCP Apps</h2>
-        <p className="mt-1 text-sm text-muted-foreground">
-          View and manage Model Context Protocol server apps that provide
-          interactive UI components.
-        </p>
-      </div>
-
-      <Tabs className="w-full" defaultValue="apps">
-        <TabsList>
-          <TabsTrigger value="apps">Apps List</TabsTrigger>
-          <TabsTrigger value="info">About MCP Apps</TabsTrigger>
-        </TabsList>
-
-        <TabsContent className="mt-6" value="apps">
-          {servers.length === 0 ? (
-            <div className="rounded-xl border border-border/50 bg-card p-8 text-center">
-              <Server className="mx-auto mb-3 size-8 text-muted-foreground/50" />
-              <p className="text-sm font-medium text-muted-foreground">
-                No MCP apps configured
-              </p>
-              <p className="mt-1 text-xs text-muted-foreground/60">
-                Configure MCP servers to extend the chatbot with interactive
-                apps.
-              </p>
-            </div>
-          ) : (
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {servers.map((app) => (
-                <div
-                  className="rounded-xl border border-border bg-card p-4 transition-colors hover:bg-muted/50"
-                  key={app.name}
-                >
-                  <div className="flex items-start justify-between">
-                    <div className="min-w-0">
-                      <h3 className="text-sm font-medium truncate">
-                        {app.name}
-                      </h3>
-                      <div className="mt-1 flex items-center gap-2">
-                        <Badge className="text-[10px] h-4" variant="outline">
-                          {app.transport.toUpperCase()}
-                        </Badge>
-                        <Badge
-                          className="text-[10px] h-4"
-                          variant={app.enabled ? "default" : "secondary"}
-                        >
-                          {app.enabled ? "Active" : "Inactive"}
-                        </Badge>
-                      </div>
-                    </div>
-                  </div>
-                  {app.lastConnectedAt && (
-                    <p className="mt-2 text-xs text-muted-foreground">
-                      Last connected:{" "}
-                      {new Date(app.lastConnectedAt).toLocaleDateString()}
-                    </p>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
-        </TabsContent>
-
-        <TabsContent className="mt-6" value="info">
-          <div className="rounded-xl border border-border bg-card p-6 space-y-4">
-            <h3 className="text-lg font-medium">About MCP Apps</h3>
-            <p className="text-sm text-muted-foreground">
-              MCP Apps extend Model Context Protocol tools with interactive UI
-              resources. When a tool has <code>_meta.ui.resourceUri</code>, the
-              model calls it and you can render its <code>ui://</code> HTML in a
-              sandboxed iframe.
-            </p>
-            <div className="space-y-2">
-              <h4 className="text-sm font-medium">Key Features:</h4>
-              <ul className="text-sm text-muted-foreground space-y-1 list-disc pl-5">
-                <li>
-                  <strong>Split Tool Visibility:</strong> Tools marked with{" "}
-                  <code>visibility: [&quot;model&quot;, &quot;app&quot;]</code>{" "}
-                  can be shown to the model while interactive UIs stay separate
-                </li>
-                <li>
-                  <strong>Sandboxed Rendering:</strong> MCP App resources are
-                  rendered in iframes with proper security policies
-                </li>
-                <li>
-                  <strong>Host Bridge:</strong> Your app acts as a bridge
-                  between the model and interactive UI components
-                </li>
-                <li>
-                  <strong>Tool Bridging:</strong> Model-initiated tool calls to
-                  app-visible tools are proxied back to the original MCP server
-                </li>
-              </ul>
-            </div>
-          </div>
-        </TabsContent>
-      </Tabs>
-    </div>
   );
 }

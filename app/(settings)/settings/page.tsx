@@ -20,7 +20,6 @@ import {
   UserRoundPenIcon,
   XIcon,
 } from "lucide-react";
-import type { McpServer } from "@/lib/db/schema";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -50,6 +49,7 @@ import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { authClient, useSession } from "@/lib/auth-client";
+import type { McpServer } from "@/lib/db/schema";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -116,7 +116,6 @@ const tabs: { id: TabId; label: string; icon: typeof UserIcon | null }[] = [
   { id: "security", label: "Security", icon: KeyIcon },
   { id: "projects", label: "Projects", icon: FolderIcon },
   { id: "mcp-servers", label: "MCP Servers", icon: ServerIcon },
-  { id: "mcp-apps", label: "MCP Apps", icon: ServerIcon },
   { id: "skills", label: "Skills", icon: BrainIcon },
   { id: "general", label: "General", icon: SettingsIcon },
   { id: "personalize", label: "Personalization", icon: UserRoundPenIcon },
@@ -130,7 +129,7 @@ export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState<TabId>("account");
 
   useEffect(() => {
-    if (!session?.data) {
+    if (!session?.data && !session?.isPending) {
       router.push("/login");
     }
   }, [session, router]);
@@ -177,10 +176,172 @@ export default function SettingsPage() {
       {activeTab === "security" && <SecurityTab />}
       {activeTab === "projects" && <ProjectsTab />}
       {activeTab === "mcp-servers" && <McpTab />}
-      {activeTab === "mcp-apps" && <McpAppsTab />}
       {activeTab === "skills" && <SkillsTab />}
       {activeTab === "general" && <GeneralTab />}
       {activeTab === "personalize" && <PersonalizationTab />}
+    </div>
+  );
+}
+
+// ─── Security Tab ────────────────────────────────────────────────────────────
+function SecurityTab() {
+  const _session = useSession();
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+
+  const handleChangePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (newPassword.length < 8) {
+      toast.error("New password must be at least 8 characters");
+      return;
+    }
+    setSaving(true);
+    try {
+      const response = await fetch("/api/user/password", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ currentPassword, newPassword }),
+      });
+      if (!response.ok) {
+        const data = (await response.json()) as { message?: string };
+        throw new Error(data.message ?? "Password update failed");
+      }
+      toast.success("Password updated successfully");
+      setNewPassword("");
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : "Failed to update password"
+      );
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    try {
+      const response = await fetch("/api/user/account", { method: "DELETE" });
+      if (!response.ok) {
+        throw new Error("Failed to delete account");
+      }
+      toast.success("Account deleted. Redirecting...");
+      authClient.signOut({
+        fetchOptions: {
+          onSuccess: () => {
+            window.location.href = "/login";
+          },
+        },
+      });
+      setShowDeleteDialog(false);
+    } catch {
+      toast.error("Failed to delete account");
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Change Password */}
+      <section className="rounded-xl border border-border/50 bg-card p-6">
+        <h2 className="mb-4 text-sm font-medium text-muted-foreground">
+          Change Password
+        </h2>
+        <form className="space-y-4" onSubmit={handleChangePassword}>
+          <div className="space-y-2">
+            <label className="text-sm font-medium" htmlFor="current-password">
+              Current Password
+            </label>
+            <Input
+              id="current-password"
+              onChange={(e) => setCurrentPassword(e.target.value)}
+              placeholder="••••••••"
+              required
+              type="password"
+              value={currentPassword}
+            />
+          </div>
+          <div className="space-y-2">
+            <label className="text-sm font-medium" htmlFor="new-password">
+              New Password
+            </label>
+            <Input
+              id="new-password"
+              onChange={(e) => setNewPassword(e.target.value)}
+              placeholder="••••••••"
+              required
+              type="password"
+              value={newPassword}
+            />
+            <p className="text-[11px] text-muted-foreground">
+              Must be at least 8 characters.
+            </p>
+          </div>
+          <div className="flex justify-end">
+            <Button
+              disabled={saving || !currentPassword || newPassword.length < 8}
+              type="submit"
+            >
+              {saving ? (
+                <LoaderIcon className="size-4 animate-spin" />
+              ) : (
+                <KeyIcon className="size-4" />
+              )}
+              Update Password
+            </Button>
+          </div>
+        </form>
+      </section>
+
+      {/* Danger Zone */}
+      <section className="rounded-xl border border-destructive/50 bg-card p-6">
+        <h2 className="mb-4 text-sm font-medium text-destructive">
+          Danger Zone
+        </h2>
+        <div className="flex items-start gap-4">
+          <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-destructive/10">
+            <TrashIcon className="size-5 text-destructive" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <h3 className="text-sm font-medium">Delete Account</h3>
+            <p className="mt-0.5 text-xs text-muted-foreground">
+              Permanently delete your account and all associated data. This
+              cannot be undone.
+            </p>
+          </div>
+          <Button
+            className="shrink-0 gap-1.5"
+            onClick={() => setShowDeleteDialog(true)}
+            size="sm"
+            variant="destructive"
+          >
+            <TrashIcon className="size-3.5" />
+            Delete Account
+          </Button>
+        </div>
+      </section>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog onOpenChange={setShowDeleteDialog} open={showDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Account</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete your account? This action cannot
+              be undone. Your chats, projects, and all associated data will be
+              permanently removed.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={handleDeleteAccount}
+            >
+              Delete Account
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
@@ -189,7 +350,6 @@ export default function SettingsPage() {
 function McpTab() {
   const [servers, setServers] = useState<McpServer[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showAddDialog, setShowAddDialog] = useState(false);
 
   useEffect(() => {
     fetch("/api/mcp-servers")
@@ -209,10 +369,6 @@ function McpTab() {
           <h2 className="text-sm font-medium text-muted-foreground">
             MCP Servers
           </h2>
-          <Button size="sm" onClick={() => setShowAddDialog(true)}>
-            <PlusIcon className="size-4" />
-            Add Server
-          </Button>
         </div>
         {servers.length === 0 ? (
           <p className="mt-4 text-sm text-muted-foreground">
@@ -222,33 +378,20 @@ function McpTab() {
           <div className="mt-4 space-y-3">
             {servers.map((server) => (
               <div
-                key={server.id}
                 className="flex items-center justify-between rounded-lg border border-border/50 p-4"
+                key={server.id}
               >
                 <div>
                   <p className="text-sm font-medium">{server.name}</p>
                   <p className="text-xs text-muted-foreground">
-                    {server.transport} • {server.enabled ? "Enabled" : "Disabled"}
+                    {server.transport} •{" "}
+                    {server.enabled ? "Enabled" : "Disabled"}
                   </p>
                 </div>
               </div>
             ))}
           </div>
         )}
-      </section>
-    </div>
-  );
-}
-
-// ─── MCP Apps Tab ─────────────────────────────────────────────────────────
-function McpAppsTab() {
-  return (
-    <div className="space-y-6">
-      <section className="rounded-xl border border-border/50 bg-card p-6">
-        <h2 className="text-sm font-medium text-muted-foreground">MCP Apps</h2>
-        <p className="mt-4 text-sm text-muted-foreground">
-          MCP Apps are tool providers connected via MCP servers.
-        </p>
       </section>
     </div>
   );
@@ -406,94 +549,6 @@ function AccountTab() {
           </Button>
         </div>
       </section>
-    </div>
-  );
-}
-
-// ─── Security Tab ────────────────────────────────────────────────────────────
-
-function SecurityTab() {
-  const router = useRouter();
-  const session = useSession();
-  const _user = session?.data?.user;
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-
-  const handleDeleteAccount = async () => {
-    try {
-      const response = await fetch("/api/user/account", {
-        method: "DELETE",
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to delete account");
-      }
-
-      toast.success("Account deleted. Redirecting...");
-      authClient.signOut({
-        fetchOptions: {
-          onSuccess: () => {
-            router.push("/login");
-          },
-        },
-      });
-      setShowDeleteDialog(false);
-    } catch {
-      toast.error("Failed to delete account");
-    }
-  };
-
-  return (
-    <div className="space-y-6">
-      {/* Danger Zone */}
-      <section className="rounded-xl border border-destructive/50 bg-card p-6">
-        <h2 className="mb-4 text-sm font-medium text-destructive">
-          Danger Zone
-        </h2>
-        <div className="flex items-start gap-4">
-          <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-destructive/10">
-            <TrashIcon className="size-5 text-destructive" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <h3 className="text-sm font-medium">Delete Account</h3>
-            <p className="mt-0.5 text-xs text-muted-foreground">
-              Permanently delete your account and all associated data. This
-              cannot be undone.
-            </p>
-          </div>
-          <Button
-            className="shrink-0 gap-1.5"
-            onClick={() => setShowDeleteDialog(true)}
-            size="sm"
-            variant="destructive"
-          >
-            <TrashIcon className="size-3.5" />
-            Delete Account
-          </Button>
-        </div>
-      </section>
-
-      {/* Delete Confirmation Dialog */}
-      <AlertDialog onOpenChange={setShowDeleteDialog} open={showDeleteDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete Account</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to delete your account? This action cannot
-              be undone. Your chats, projects, and all associated data will be
-              permanently removed.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              onClick={handleDeleteAccount}
-            >
-              Delete Account
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   );
 }

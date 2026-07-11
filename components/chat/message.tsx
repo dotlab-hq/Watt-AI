@@ -3,7 +3,6 @@ import type { UseChatHelpers } from "@ai-sdk/react";
 import type { DynamicToolUIPart } from "ai";
 import { ChevronDownIcon } from "lucide-react";
 import { useState } from "react";
-import { CodeBlock } from "@/components/ai-elements/code-block";
 import {
   MessageContent,
   MessageResponse,

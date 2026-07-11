@@ -79,7 +79,7 @@ export async function PATCH(request: Request) {
   const body = await request.json();
   const { id, enabled, name, transport, url, command, args, headers } =
     body as {
-      id: string;
+      id?: string;
       enabled?: boolean;
       name?: string;
       transport?: "stdio" | "sse" | "streamable-http";
@@ -89,7 +89,11 @@ export async function PATCH(request: Request) {
       headers?: Record<string, string>;
     };
 
-  if (!id) {
+  // Support id from query params as well
+  const { searchParams } = new URL(request.url);
+  const serverId = id || searchParams.get("id");
+
+  if (!serverId) {
     return new ChatbotError(
       "bad_request:api",
       "Server ID is required"
@@ -97,7 +101,7 @@ export async function PATCH(request: Request) {
   }
 
   const updated = await updateMcpServer({
-    id,
+    id: serverId,
     enabled,
     name,
     transport,

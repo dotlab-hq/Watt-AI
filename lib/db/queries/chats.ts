@@ -21,6 +21,7 @@ export async function saveChat({
     return await db.insert(chat).values({
       id,
       createdAt: new Date(),
+      updatedAt: new Date(),
       userId,
       title,
       visibility,
@@ -107,7 +108,7 @@ export async function getChatsByUserId({
             ? and(whereCondition, eq(chat.userId, id))
             : eq(chat.userId, id)
         )
-        .orderBy(desc(chat.createdAt))
+        .orderBy(desc(chat.updatedAt))
         .limit(extendedLimit);
 
     let filteredChats: Chat[] = [];
@@ -126,7 +127,7 @@ export async function getChatsByUserId({
         );
       }
 
-      filteredChats = await query(gt(chat.createdAt, selectedChat.createdAt));
+      filteredChats = await query(gt(chat.updatedAt, selectedChat.updatedAt));
     } else if (endingBefore) {
       const [selectedChat] = await db
         .select()
@@ -141,7 +142,7 @@ export async function getChatsByUserId({
         );
       }
 
-      filteredChats = await query(lt(chat.createdAt, selectedChat.createdAt));
+      filteredChats = await query(lt(chat.updatedAt, selectedChat.updatedAt));
     } else {
       filteredChats = await query();
     }
@@ -183,7 +184,7 @@ export async function getChatsByProjectId({
             ? and(whereCondition, eq(chat.projectId, projectId))
             : eq(chat.projectId, projectId)
         )
-        .orderBy(desc(chat.createdAt))
+        .orderBy(desc(chat.updatedAt))
         .limit(extendedLimit);
 
     let filteredChats: Chat[] = [];
@@ -202,7 +203,7 @@ export async function getChatsByProjectId({
         );
       }
 
-      filteredChats = await query(gt(chat.createdAt, selectedChat.createdAt));
+      filteredChats = await query(gt(chat.updatedAt, selectedChat.updatedAt));
     } else if (endingBefore) {
       const [selectedChat] = await db
         .select()
@@ -217,7 +218,7 @@ export async function getChatsByProjectId({
         );
       }
 
-      filteredChats = await query(lt(chat.createdAt, selectedChat.createdAt));
+      filteredChats = await query(lt(chat.updatedAt, selectedChat.updatedAt));
     } else {
       filteredChats = await query();
     }

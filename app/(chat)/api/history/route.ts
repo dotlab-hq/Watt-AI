@@ -48,7 +48,7 @@ export async function GET(request: NextRequest) {
       .where(
         whereCondition ? and(whereCondition, baseCondition) : baseCondition
       )
-      .orderBy(desc(chat.createdAt))
+      .orderBy(desc(chat.updatedAt))
       .limit(extendedLimit);
 
   let filteredChats: Chat[] = [];
@@ -62,7 +62,7 @@ export async function GET(request: NextRequest) {
     if (!selectedChat) {
       return new ChatbotError("not_found:api", "Chat not found").toResponse();
     }
-    filteredChats = await queryFn(gt(chat.createdAt, selectedChat.createdAt));
+    filteredChats = await queryFn(gt(chat.updatedAt, selectedChat.updatedAt));
   } else if (endingBefore) {
     const [selectedChat] = await db
       .select()
@@ -72,7 +72,7 @@ export async function GET(request: NextRequest) {
     if (!selectedChat) {
       return new ChatbotError("not_found:api", "Chat not found").toResponse();
     }
-    filteredChats = await queryFn(lt(chat.createdAt, selectedChat.createdAt));
+    filteredChats = await queryFn(lt(chat.updatedAt, selectedChat.updatedAt));
   } else {
     filteredChats = await queryFn();
   }

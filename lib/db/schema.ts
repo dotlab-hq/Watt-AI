@@ -36,6 +36,9 @@ export type User = InferSelectModel<typeof user>;
 export const chat = chatbot.table("Chat", {
   id: uuid("id").primaryKey().notNull().defaultRandom(),
   createdAt: timestamp("createdAt").notNull(),
+  updatedAt: timestamp("updatedAt")
+    .$onUpdate(() => new Date())
+    .notNull(),
   title: text("title").notNull(),
   userId: text("userId")
     .notNull()
