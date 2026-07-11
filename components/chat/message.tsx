@@ -19,7 +19,7 @@ import {
   ToolHeader,
   ToolInput,
 } from "@/components/ai-elements/tool";
-import { AgentContextPanel } from "@/components/chat/agent-context-panel";
+
 import { Calculator } from "@/components/chat/calculator";
 import { CardCarousel } from "@/components/chat/card-carousel";
 import { CurrencyConverter } from "@/components/chat/currency-converter";
@@ -475,184 +475,7 @@ const PurePreviewMessage = ({
     }
 
     if (type === "tool-clientHttpRequest") {
-      const { state } = part;
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const p = part as any;
-      const inp = p.input as
-        | {
-            requests: Array<{
-              method: string;
-              url: string;
-              headers?: Record<string, string>;
-              body?: string;
-              timeout?: number;
-              referrerPolicy?: string;
-            }>;
-          }
-        | undefined;
-      const out = p.output as
-        | {
-            results: Array<{
-              request: {
-                method: string;
-                url: string;
-              };
-              response?: {
-                status?: number;
-                statusText?: string;
-                body?: unknown;
-              };
-              error?: string;
-              ok?: boolean;
-            }>;
-          }
-        | undefined;
-      const errText = p.errorText as string | undefined;
-
-      const methodColor = (method: string) => {
-        switch (method) {
-          case "GET":
-            return "bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-400";
-          case "POST":
-            return "bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-400";
-          case "PUT":
-            return "bg-orange-100 text-orange-800 dark:bg-orange-900/40 dark:text-orange-400";
-          case "PATCH":
-            return "bg-purple-100 text-purple-800 dark:bg-purple-900/40 dark:text-purple-400";
-          case "DELETE":
-            return "bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-400";
-          default:
-            return "";
-        }
-      };
-
-      const statusBadge = (status?: number) => {
-        if (status === undefined) {
-          return "";
-        }
-        if (status < 300) {
-          return "bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-400";
-        }
-        if (status < 500) {
-          return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-400";
-        }
-        return "bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-400";
-      };
-
-      return (
-        <Tool className="w-[min(100%,650px)]" defaultOpen={false} key={key}>
-          <ToolHeader
-            state={state}
-            title={
-              inp?.requests && inp.requests.length > 1
-                ? `HTTP Requests (${inp.requests.length})`
-                : "HTTP Request"
-            }
-            type={type}
-          />
-          <ToolContent>
-            {state === "output-error" && (
-              <div className="rounded-md bg-destructive/10 p-3 text-destructive text-xs">
-                {errText ?? "Request failed"}
-              </div>
-            )}
-            {state === "output-available" && out?.results && (
-              <div className="space-y-4">
-                {out.results.map((result) => {
-                  const sc = result.response?.status;
-                  return (
-                    <div
-                      className="rounded-lg border p-3"
-                      key={`${result.request.method}-${result.request.url}-${sc ?? "pending"}`}
-                    >
-                      {/* Request line */}
-                      <div className="mb-2 flex items-center gap-2">
-                        <span
-                          className={cn(
-                            "inline-flex items-center rounded px-2 py-0.5 font-mono text-xs font-bold uppercase",
-                            methodColor(result.request.method)
-                          )}
-                        >
-                          {result.request.method}
-                        </span>
-                        <span className="truncate font-mono text-xs text-muted-foreground">
-                          {result.request.url}
-                        </span>
-                      </div>
-                      {/* Response info */}
-                      {result.error ? (
-                        <div className="text-sm text-red-600 dark:text-red-400">
-                          Error: {result.error}
-                        </div>
-                      ) : (
-                        <div className="space-y-2">
-                          <div className="flex items-center gap-2">
-                            {sc !== undefined && (
-                              <span
-                                className={cn(
-                                  "inline-flex items-center rounded px-2 py-0.5 font-mono text-xs font-bold tabular-nums",
-                                  statusBadge(sc)
-                                )}
-                              >
-                                {sc} {result.response?.statusText ?? ""}
-                              </span>
-                            )}
-                            <span className="text-muted-foreground text-xs">
-                              {result.ok === true
-                                ? "Success"
-                                : result.ok === false
-                                  ? "Failed"
-                                  : ""}
-                            </span>
-                          </div>
-                          {result.response?.body ? (
-                            <CodeBlock
-                              code={JSON.stringify(
-                                result.response.body,
-                                null,
-                                2
-                              )}
-                              language="json"
-                            />
-                          ) : (
-                            <span className="text-muted-foreground text-sm">
-                              No response body
-                            </span>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-            {state !== "output-available" &&
-              state !== "output-error" &&
-              inp?.requests && (
-                <div className="space-y-3">
-                  {inp.requests.map((req) => (
-                    <div
-                      className="flex items-center gap-2"
-                      key={`${req.method}-${req.url}`}
-                    >
-                      <span
-                        className={cn(
-                          "inline-flex items-center rounded px-2 py-0.5 font-mono text-xs font-bold uppercase",
-                          methodColor(req.method)
-                        )}
-                      >
-                        {req.method}
-                      </span>
-                      <span className="truncate font-mono text-sm">
-                        {req.url}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              )}
-          </ToolContent>
-        </Tool>
-      );
+      return null;
     }
 
     // Check for MCP App tools and render them in iframe
@@ -752,9 +575,6 @@ const PurePreviewMessage = ({
   ) : (
     <>
       {attachments}
-      {isAssistant && isLoading && (
-        <AgentContextPanel chatId={chatId} className="mb-1" />
-      )}
       {isAssistant && hasImages && <ImageCarousel images={imageResults} />}
       {parts}
       {isAssistant && hasSources && (
