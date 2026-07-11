@@ -277,9 +277,9 @@ export async function POST(request: Request) {
     // Tool results are kept as they contain meaningful output, but reasoning
     // chunks and tool call inputs are stripped to reduce context bloat.
 
-    const modelMessages = await convertToModelMessages(uiMessages, {
+    const modelMessages = (await convertToModelMessages(uiMessages, {
       ignoreIncompleteToolCalls: true,
-    });
+    })).filter((m) => m.role !== "system");
 
     console.log(
       "[chat-debug] 5. modelMessages built:",

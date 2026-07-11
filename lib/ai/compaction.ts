@@ -273,11 +273,11 @@ export function buildMessagesWithCompaction(
     return messages;
   }
 
-  // Prepend the summary as a system message
+  // Prepend the summary as an assistant message (AI SDK rejects system role in messages array)
   const summaryMessage: DBMessage = {
     id: crypto.randomUUID(),
     chatId: messages[0]?.chatId ?? "",
-    role: "system",
+    role: "assistant",
     parts: [
       {
         type: "text",
