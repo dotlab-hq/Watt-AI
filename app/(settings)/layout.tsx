@@ -5,17 +5,6 @@ import { auth } from "@/app/(auth)/auth";
 import { AppSidebar } from "@/components/chat/app-sidebar";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 
-export default function SettingsLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
-  return (
-    <Suspense fallback={<div className="flex h-dvh bg-sidebar" />}>
-      <SettingsShell>{children}</SettingsShell>
-    </Suspense>
-  );
-}
 
 async function SettingsShell({ children }: { children: React.ReactNode }) {
   const [session, cookieStore] = await Promise.all([auth(), cookies()]);

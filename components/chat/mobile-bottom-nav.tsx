@@ -1,7 +1,6 @@
 "use client";
 
 import { HistoryIcon, MessageSquarePlusIcon, SettingsIcon } from "lucide-react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { memo, useCallback } from "react";
 import { Button } from "@/components/ui/button";
@@ -40,23 +39,21 @@ function PureMobileBottomNav() {
         size="icon"
         variant="ghost"
       >
-        <Link href="/">
+        <span>
           <MessageSquarePlusIcon className="size-[18px]" />
           <span className="text-[10px] leading-none font-medium">New</span>
-        </Link>
+        </span>
       </Button>
 
       <Button
         aria-label="Settings"
-        asChild
         className="h-12 w-12 flex-col gap-0.5 rounded-xl text-muted-foreground"
+        onClick={() => window.dispatchEvent(new CustomEvent("open-settings"))}
         size="icon"
         variant="ghost"
       >
-        <Link href="/settings">
-          <SettingsIcon className="size-[18px]" />
-          <span className="text-[10px] leading-none font-medium">Settings</span>
-        </Link>
+        <SettingsIcon className="size-[18px]" />
+        <span className="text-[10px] leading-none font-medium">Settings</span>
       </Button>
     </nav>
   );

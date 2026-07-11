@@ -5,6 +5,7 @@ import {
   Check,
   FileIcon,
   FolderIcon,
+  KeyIcon,
   LightbulbIcon,
   LinkIcon,
   LoaderIcon,
@@ -14,7 +15,6 @@ import {
   PlusIcon,
   Server,
   SettingsIcon,
-  TerminalIcon,
   TrashIcon,
   UploadIcon,
   User,
@@ -85,9 +85,9 @@ import { authClient, useSession } from "@/lib/auth-client";
 
 type TabId =
   | "account"
+  | "security"
   | "projects"
   | "mcp-servers"
-  | "mcp-apps"
   | "skills"
   | "general"
   | "personalize";
@@ -118,7 +118,7 @@ type McpServer = {
   id: string;
   name: string;
   description: string | null;
-  transport: "stdio" | "sse" | "streamable-http";
+  transport: "sse" | "streamable-http";
   url: string | null;
   command: string | null;
   args: string[] | null;
@@ -130,9 +130,9 @@ type McpServer = {
 
 const navItems: { id: TabId; label: string; icon: typeof User | null }[] = [
   { id: "account", label: "Account", icon: User },
+  { id: "security", label: "Security", icon: KeyIcon },
   { id: "projects", label: "Projects", icon: FolderIcon },
   { id: "mcp-servers", label: "MCP Servers", icon: Server },
-  { id: "mcp-apps", label: "MCP Apps", icon: Server },
   { id: "skills", label: "Skills", icon: LightbulbIcon },
   { id: "general", label: "General", icon: SettingsIcon },
   { id: "personalize", label: "Personalization", icon: UserRoundPenIcon },
@@ -275,6 +275,7 @@ function InnerSettings({
         </div>
         <div className="flex flex-1 flex-col gap-2 overflow-y-auto p-3 md:p-4">
           {activeTab === "account" && <AccountTab />}
+          {activeTab === "security" && <SecurityTab />}
           {activeTab === "projects" && <ProjectsTab />}
           {activeTab === "mcp-servers" && <McpTab />}
           {activeTab === "skills" && <SkillsTab />}
@@ -599,6 +600,161 @@ function AccountTab() {
           </form>
         </CreateDialogContent>
       </Dialog>
+    </div>
+  );
+}
+
+// ─── Security Tab ──────────────────────────────────────────────────────────
+
+function SecurityTab() {
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+
+  const handleChangePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (newPassword.length < 8) {
+      toast.error("New password must be at least 8 characters");
+      return;
+    }
+    setSaving(true);
+    try {
+      const response = await fetch("/api/user/password", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ currentPassword, newPassword }),
+      });
+      if (!response.ok) {
+        const data = (await response.json()) as { message?: string };
+        throw new Error(data.message ?? "Password update failed");
+      }
+      toast.success("Password updated");
+      setCurrentPassword("");
+      setNewPassword("");
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : "Failed to update password"
+      );
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    try {
+      const response = await fetch("/api/user/account", { method: "DELETE" });
+      if (!response.ok) {
+        throw new Error("Failed to delete account");
+      }
+      toast.success("Account deleted");
+      authClient.signOut({
+        fetchOptions: {
+          onSuccess: () => {
+            window.location.href = "/login";
+          },
+        },
+      });
+    } catch {
+      toast.error("Failed to delete account");
+    }
+  };
+
+  return (
+    <div className="space-y-2">
+      <section className="rounded-lg border border-border bg-card p-3 md:p-4">
+        <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">
+          Change Password
+        </h3>
+        <form className="space-y-3" onSubmit={handleChangePassword}>
+          <div className="space-y-1.5">
+            <label className="text-sm font-medium" htmlFor="ss-current-pw">
+              Current Password
+            </label>
+            <Input
+              id="ss-current-pw"
+              onChange={(e) => setCurrentPassword(e.target.value)}
+              placeholder="••••••••"
+              required
+              type="password"
+              value={currentPassword}
+            />
+          </div>
+          <div className="space-y-1.5">
+            <label className="text-sm font-medium" htmlFor="ss-new-pw">
+              New Password
+            </label>
+            <Input
+              id="ss-new-pw"
+              onChange={(e) => setNewPassword(e.target.value)}
+              placeholder="••••••••"
+              required
+              type="password"
+              value={newPassword}
+            />
+            <p className="text-[10px] text-muted-foreground">
+              Min 8 characters.
+            </p>
+          </div>
+          <div className="flex justify-end">
+            <Button
+              disabled={saving || !currentPassword || newPassword.length < 8}
+              size="sm"
+              type="submit"
+            >
+              {saving ? (
+                <LoaderIcon className="size-3 animate-spin" />
+              ) : (
+                <KeyIcon className="size-3" />
+              )}
+              Update
+            </Button>
+          </div>
+        </form>
+      </section>
+
+      <section className="rounded-lg border border-destructive/30 bg-card p-3 md:p-4">
+        <div className="flex items-center gap-3">
+          <div className="flex size-8 shrink-0 items-center justify-center rounded-md bg-destructive/10">
+            <TrashIcon className="size-4 text-destructive" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-medium">Delete Account</p>
+            <p className="text-[10px] text-muted-foreground">
+              Permanently remove your account and all data.
+            </p>
+          </div>
+          <Button
+            className="shrink-0 h-7 text-xs gap-1"
+            onClick={() => setShowDeleteDialog(true)}
+            size="sm"
+            variant="destructive"
+          >
+            Delete
+          </Button>
+        </div>
+      </section>
+
+      <AlertDialog onOpenChange={setShowDeleteDialog} open={showDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Account</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. Your chats, projects, and all data
+              will be permanently removed.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={handleDeleteAccount}
+            >
+              Delete Account
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
@@ -1046,12 +1202,13 @@ function McpTab() {
   const [formName, setFormName] = useState("");
   const [formDescription, setFormDescription] = useState("");
   const [formTransport, setFormTransport] = useState<
-    "stdio" | "sse" | "streamable-http"
+    "sse" | "streamable-http"
   >("sse");
   const [formUrl, setFormUrl] = useState("");
   const [formCommand, setFormCommand] = useState("");
   const [formArgs, setFormArgs] = useState("");
   const [formHeaders, setFormHeaders] = useState("");
+  const [showHeaders, setShowHeaders] = useState(true);
 
   const loadServers = useCallback(async () => {
     try {
@@ -1079,6 +1236,7 @@ function McpTab() {
     setFormCommand("");
     setFormArgs("");
     setFormHeaders("");
+    setShowHeaders(true);
   };
   const openCreate = () => {
     resetForm();
@@ -1100,6 +1258,7 @@ function McpTab() {
             .join("\n")
         : ""
     );
+    setShowHeaders(!!server.headers && Object.keys(server.headers).length > 0);
     setShowCreate(true);
   };
 
@@ -1264,20 +1423,12 @@ function McpTab() {
                       </p>
                     )}
                     <div className="mt-1.5 flex items-center gap-2 text-xs text-muted-foreground">
-                      {server.transport === "stdio" && server.command && (
+                      {server.url && (
                         <span className="flex items-center gap-1">
-                          <TerminalIcon className="size-3" />
-                          {server.command}
+                          <LinkIcon className="size-3" />
+                          {server.url}
                         </span>
                       )}
-                      {(server.transport === "sse" ||
-                        server.transport === "streamable-http") &&
-                        server.url && (
-                          <span className="flex items-center gap-1">
-                            <LinkIcon className="size-3" />
-                            {server.url}
-                          </span>
-                        )}
                     </div>
                   </div>
                   <div className="flex items-center gap-0.5 -mr-1">
@@ -1351,7 +1502,7 @@ function McpTab() {
                 Transport
               </label>
               <Select
-                onValueChange={(value: "stdio" | "sse" | "streamable-http") =>
+                onValueChange={(value: "sse" | "streamable-http") =>
                   setFormTransport(value)
                 }
                 value={formTransport}
@@ -1364,73 +1515,54 @@ function McpTab() {
                   <SelectItem value="streamable-http">
                     Streamable HTTP
                   </SelectItem>
-                  <SelectItem value="stdio">Stdio (Local Process)</SelectItem>
                 </SelectContent>
               </Select>
             </div>
-            {formTransport === "stdio" ? (
-              <>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium" htmlFor="mcp-command">
-                    Command
-                  </label>
-                  <Input
-                    id="mcp-command"
-                    onChange={(e) => setFormCommand(e.target.value)}
-                    placeholder="npx"
-                    value={formCommand}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium" htmlFor="mcp-args">
-                    Arguments{" "}
-                    <span className="text-muted-foreground">
-                      (space-separated)
-                    </span>
-                  </label>
-                  <Input
-                    id="mcp-args"
-                    onChange={(e) => setFormArgs(e.target.value)}
-                    placeholder="@modelcontextprotocol/server-filesystem /path"
-                    value={formArgs}
-                  />
-                </div>
-              </>
-            ) : (
-              <div className="space-y-2">
-                <label className="text-sm font-medium" htmlFor="mcp-url">
-                  URL
+            <div className="space-y-2">
+              <label className="text-sm font-medium" htmlFor="mcp-url">
+                URL
+              </label>
+              <Input
+                id="mcp-url"
+                onChange={(e) => setFormUrl(e.target.value)}
+                placeholder={
+                  formTransport === "sse"
+                    ? "https://example.com/mcp/sse"
+                    : "https://example.com/mcp"
+                }
+                value={formUrl}
+              />
+            </div>
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <label className="text-sm font-medium">
+                  Headers (optional)
                 </label>
-                <Input
-                  id="mcp-url"
-                  onChange={(e) => setFormUrl(e.target.value)}
-                  placeholder={
-                    formTransport === "sse"
-                      ? "https://example.com/mcp/sse"
-                      : "https://example.com/mcp"
-                  }
-                  value={formUrl}
-                />
+                <Button
+                  className="h-7 text-xs gap-1"
+                  onClick={() => setShowHeaders(!showHeaders)}
+                  size="sm"
+                  variant="outline"
+                  type="button"
+                >
+                  {showHeaders ? "Hide" : "Add"}
+                </Button>
               </div>
-            )}
-            {formTransport !== "stdio" && (
-              <div className="space-y-2">
-                <label className="text-sm font-medium" htmlFor="mcp-headers">
-                  Headers{" "}
-                  <span className="text-muted-foreground">(optional)</span>
-                </label>
-                <Textarea
-                  id="mcp-headers"
-                  onChange={(e) => setFormHeaders(e.target.value)}
-                  placeholder={"Authorization: Bearer token\nX-Custom: value"}
-                  rows={3}
-                  value={formHeaders}
-                />
-                <p className="text-[11px] text-muted-foreground">
-                  One header per line, format: Key: Value
-                </p>
-              </div>
-            )}
+              {showHeaders && (
+                <div className="space-y-2 rounded-lg border border-border/50 bg-muted/20 p-4">
+                  <Textarea
+                    id="mcp-headers"
+                    onChange={(e) => setFormHeaders(e.target.value)}
+                    placeholder={"Authorization: Bearer token\nX-Custom: value"}
+                    rows={3}
+                    value={formHeaders}
+                  />
+                  <p className="text-[11px] text-muted-foreground">
+                    One header per line, format: Key: Value
+                  </p>
+                </div>
+              )}
+            </div>
             <CreateDialogFooter>
               <Button
                 onClick={() => {
