@@ -300,10 +300,13 @@ export async function POST(request: Request) {
     // instead of passing full message history. This saves context window space.
 
     let sessionContext = "";
-    if (process.env.MONGODB_URI && modelMessages.length > 10) {
+    if (process.env.MONGODB_URI) {
       try {
         const estimatedTokens = estimateTokens(modelMessages);
-        const shouldUseMemory = estimatedTokens > 30_000 || modelMessages.length > 25;
+        // Token-first threshold: ~60% of 128k context = ~76k tokens for messages.
+        // If we're past that, switch to session memory context.
+        // Also allow manual switch via message count (20+ messages).
+        const shouldUseMemory = estimatedTokens > 20_000 || modelMessages.length > 20;
 
         if (shouldUseMemory) {
           const { buildSessionContext } = await import(

@@ -318,18 +318,19 @@ export async function buildSessionContext(params: {
 
 /**
  * Determine if conversation should use session-memory-based context
- * instead of full message history. Returns true when conversation is long
- * enough that memory-based context would be more efficient.
+ * instead of full message history. Token count is the PRIMARY signal —
+ * even 3-4 very long messages can blow past the context window.
  */
 export function shouldUseSessionContext(params: {
   messageCount: number;
   estimatedTokens: number;
-  thresholdTokens?: number;
+  modelMaxTokens?: number;
 }): boolean {
-  const { messageCount, estimatedTokens, thresholdTokens = 50_000 } = params;
+  const { messageCount, estimatedTokens, modelMaxTokens = 128_000 } = params;
 
-  // Use session context when:
-  // 1. More than 20 messages (conversation is getting long)
-  // 2. Estimated tokens exceed threshold
-  return messageCount > 20 || estimatedTokens > thresholdTokens;
+  // Reserve ~40% for system prompt + tools, ~60% for messages.
+  // If messages exceed that budget, switch to memory-based context.
+  const messageBudget = Math.floor(modelMaxTokens * 0.6);
+
+  return estimatedTokens > messageBudget;
 }
