@@ -2,10 +2,13 @@ import { auth } from "@/app/(auth)/auth";
 import {
   createMcpServer,
   deleteMcpServerById,
+  getMcpServerById,
   getMcpServersByUserId,
   updateMcpServer,
 } from "@/lib/db/queries";
+import type { McpServer } from "@/lib/db/schema";
 import { ChatbotError } from "@/lib/errors";
+import { connectToMcpServer, disconnectFromMcpServer } from "@/lib/mcp/client";
 
 export async function GET() {
   const session = await auth();
@@ -21,6 +24,53 @@ export async function POST(request: Request) {
   const session = await auth();
   if (!session?.user) {
     return new ChatbotError("unauthorized:chat").toResponse();
+  }
+
+  // ── Test connection (no persistence) ──────────────────────────────────
+  const { searchParams } = new URL(request.url);
+  if (searchParams.get("action") === "test") {
+    const body = await request.json().catch(() => ({}));
+
+    let config: McpServer | null = null;
+    if (body.id) {
+      config = await getMcpServerById({ id: String(body.id) });
+    } else {
+      const { name, transport, url, command, args, env, headers } = body;
+      if (!transport) {
+        return new ChatbotError(
+          "bad_request:api",
+          "transport is required"
+        ).toResponse();
+      }
+      config = {
+        id: "test",
+        name: name ?? "test",
+        description: null,
+        transport,
+        url: url ?? null,
+        command: command ?? null,
+        args: args ?? null,
+        env: env ?? null,
+        headers: headers ?? null,
+        userId: session.user.id,
+        enabled: true,
+        lastConnectedAt: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      } as McpServer;
+    }
+
+    if (!config) {
+      return new ChatbotError("not_found:api", "Server not found").toResponse();
+    }
+
+    const result = await connectToMcpServer(config);
+    // Best-effort cleanup of the throwaway test client; ignore if already gone.
+    await disconnectFromMcpServer("test").catch(() => undefined);
+    if (result.error) {
+      return Response.json({ ok: false, error: result.error });
+    }
+    return Response.json({ ok: true, toolCount: result.toolCount ?? 0 });
   }
 
   const body = await request.json();

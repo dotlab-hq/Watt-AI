@@ -395,11 +395,12 @@ export function ActiveChatProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (prevChatIdRef.current !== chatId) {
       prevChatIdRef.current = chatId;
-      if (isNewChat) {
-        setMessages([]);
-      }
+      // Clear messages immediately on any chat switch so the previous chat's
+      // content doesn't linger (and the message skeleton shows) while the new
+      // chat's data loads.
+      setMessages([]);
     }
-  }, [chatId, isNewChat, setMessages]);
+  }, [chatId, setMessages]);
 
   useEffect(() => {
     if (chatData && !isNewChat) {

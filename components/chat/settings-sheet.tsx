@@ -15,6 +15,7 @@ import {
   PlusIcon,
   Server,
   SettingsIcon,
+  TerminalIcon,
   TrashIcon,
   UploadIcon,
   User,
@@ -118,7 +119,7 @@ type McpServer = {
   id: string;
   name: string;
   description: string | null;
-  transport: "sse" | "streamable-http";
+  transport: "stdio" | "sse" | "streamable-http";
   url: string | null;
   command: string | null;
   args: string[] | null;
@@ -148,14 +149,14 @@ export function SettingsSheet({ open, onOpenChange, tab }: SettingsSheetProps) {
   return (
     <Dialog onOpenChange={onOpenChange} open={open}>
       <DialogContent
-        className="overflow-hidden p-0 h-[min(500px,85dvh)] w-[calc(100vw-2rem)] max-w-[680px] md:max-w-[680px]"
+        className="flex flex-col overflow-hidden p-0 h-[min(500px,90dvh)] w-[calc(100vw-2rem)] max-w-[calc(100vw-2rem)] md:max-w-[680px]"
         showCloseButton={false}
       >
         <DialogTitle className="sr-only">Settings</DialogTitle>
         <DialogDescription className="sr-only">
           Manage your account, projects, and integrations.
         </DialogDescription>
-        <SidebarProvider className="min-h-0 h-full items-stretch">
+        <SidebarProvider className="flex min-h-0 h-full w-full items-stretch">
           <InnerSettings initialTab={tab} onClose={() => onOpenChange(false)} />
         </SidebarProvider>
       </DialogContent>
@@ -250,7 +251,7 @@ function InnerSettings({
       </Sidebar>
 
       {/* Content */}
-      <main className="flex min-h-0 md:h-[500px] flex-1 flex-col overflow-hidden">
+      <main className="flex min-h-0 h-full flex-1 flex-col overflow-hidden">
         {/* Mobile header inside content */}
         <div className="flex md:hidden shrink-0 items-center justify-between border-b border-border/50 bg-muted/10 px-3 py-2.5">
           <span className="text-sm font-medium">{activeLabel}</span>
@@ -1201,14 +1202,20 @@ function McpTab() {
   const [deleteTarget, setDeleteTarget] = useState<McpServer | null>(null);
   const [formName, setFormName] = useState("");
   const [formDescription, setFormDescription] = useState("");
-  const [formTransport, setFormTransport] = useState<"sse" | "streamable-http">(
-    "sse"
-  );
+  const [formTransport, setFormTransport] = useState<
+    "stdio" | "sse" | "streamable-http"
+  >("sse");
   const [formUrl, setFormUrl] = useState("");
   const [formCommand, setFormCommand] = useState("");
   const [formArgs, setFormArgs] = useState("");
   const [formHeaders, setFormHeaders] = useState("");
   const [showHeaders, setShowHeaders] = useState(true);
+  const [testState, setTestState] = useState<
+    | { status: "idle" }
+    | { status: "testing" }
+    | { status: "ok"; toolCount: number }
+    | { status: "error"; error: string }
+  >({ status: "idle" });
 
   const loadServers = useCallback(async () => {
     try {
@@ -1237,6 +1244,7 @@ function McpTab() {
     setFormArgs("");
     setFormHeaders("");
     setShowHeaders(true);
+    setTestState({ status: "idle" });
   };
   const openCreate = () => {
     resetForm();
@@ -1310,6 +1318,71 @@ function McpTab() {
       toast.error("Failed to save MCP server");
     } finally {
       setCreating(false);
+    }
+  };
+
+  const handleTest = async () => {
+    if (!formName.trim()) {
+      toast.error("Enter a name first");
+      return;
+    }
+    if (formTransport !== "stdio" && !formUrl.trim()) {
+      toast.error("URL is required for HTTP/SSE transport");
+      return;
+    }
+    if (formTransport === "stdio" && !formCommand.trim()) {
+      toast.error("Command is required for stdio transport");
+      return;
+    }
+    setTestState({ status: "testing" });
+    try {
+      const payload = {
+        name: formName.trim(),
+        transport: formTransport,
+        url: formUrl.trim() || undefined,
+        command: formCommand.trim() || undefined,
+        args: formArgs.trim() ? formArgs.trim().split(/\s+/) : undefined,
+        headers: formHeaders.trim()
+          ? formHeaders
+              .split(/^\s*$/gm)
+              .filter((line) => line.includes(":"))
+              .reduce(
+                (acc, line) => {
+                  const [key, ...values] = line.split(":");
+                  acc[key.trim()] = values.join(":").trim();
+                  return acc;
+                },
+                {} as Record<string, string>
+              )
+          : undefined,
+      };
+      const r = await fetch("/api/mcp-servers?action=test", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const data = (await r.json()) as {
+        ok?: boolean;
+        toolCount?: number;
+        error?: string;
+      };
+      if (data.ok) {
+        setTestState({ status: "ok", toolCount: data.toolCount ?? 0 });
+        toast.success(
+          data.toolCount
+            ? `Connected — ${data.toolCount} tool(s) available`
+            : "Connected (no tools exposed)"
+        );
+      } else {
+        setTestState({
+          status: "error",
+          error: data.error ?? "Connection failed",
+        });
+        toast.error("Connection failed — see details below");
+      }
+    } catch {
+      setTestState({ status: "error", error: "Request failed" });
+      toast.error("Connection test failed");
     }
   };
 
@@ -1422,13 +1495,25 @@ function McpTab() {
                         {server.description}
                       </p>
                     )}
-                    <div className="mt-1.5 flex items-center gap-2 text-xs text-muted-foreground">
-                      {server.url && (
-                        <span className="flex items-center gap-1">
-                          <LinkIcon className="size-3" />
-                          {server.url}
-                        </span>
-                      )}
+                    <div className="mt-1.5 flex min-w-0 items-center gap-2 text-xs text-muted-foreground">
+                      {server.transport === "stdio"
+                        ? server.command && (
+                            <span className="flex min-w-0 items-center gap-1">
+                              <TerminalIcon className="size-3 shrink-0" />
+                              <span className="truncate font-mono">
+                                {server.command}
+                                {server.args?.length
+                                  ? ` ${server.args.join(" ")}`
+                                  : ""}
+                              </span>
+                            </span>
+                          )
+                        : server.url && (
+                            <span className="flex min-w-0 items-center gap-1">
+                              <LinkIcon className="size-3 shrink-0" />
+                              <span className="truncate">{server.url}</span>
+                            </span>
+                          )}
                     </div>
                   </div>
                   <div className="flex items-center gap-0.5 -mr-1">
@@ -1502,7 +1587,7 @@ function McpTab() {
                 Transport
               </label>
               <Select
-                onValueChange={(value: "sse" | "streamable-http") =>
+                onValueChange={(value: "stdio" | "sse" | "streamable-http") =>
                   setFormTransport(value)
                 }
                 value={formTransport}
@@ -1511,6 +1596,7 @@ function McpTab() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="stdio">Stdio (local command)</SelectItem>
                   <SelectItem value="sse">SSE (Server-Sent Events)</SelectItem>
                   <SelectItem value="streamable-http">
                     Streamable HTTP
@@ -1518,21 +1604,48 @@ function McpTab() {
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium" htmlFor="mcp-url">
-                URL
-              </label>
-              <Input
-                id="mcp-url"
-                onChange={(e) => setFormUrl(e.target.value)}
-                placeholder={
-                  formTransport === "sse"
-                    ? "https://example.com/mcp/sse"
-                    : "https://example.com/mcp"
-                }
-                value={formUrl}
-              />
-            </div>
+            {formTransport === "stdio" ? (
+              <>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium" htmlFor="mcp-command">
+                    Command
+                  </label>
+                  <Input
+                    id="mcp-command"
+                    onChange={(e) => setFormCommand(e.target.value)}
+                    placeholder="npx -y @modelcontextprotocol/server-filesystem"
+                    value={formCommand}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium" htmlFor="mcp-args">
+                    Args (optional, space-separated)
+                  </label>
+                  <Input
+                    id="mcp-args"
+                    onChange={(e) => setFormArgs(e.target.value)}
+                    placeholder="/path/to/dir"
+                    value={formArgs}
+                  />
+                </div>
+              </>
+            ) : (
+              <div className="space-y-2">
+                <label className="text-sm font-medium" htmlFor="mcp-url">
+                  URL
+                </label>
+                <Input
+                  id="mcp-url"
+                  onChange={(e) => setFormUrl(e.target.value)}
+                  placeholder={
+                    formTransport === "sse"
+                      ? "https://example.com/mcp/sse"
+                      : "https://example.com/mcp"
+                  }
+                  value={formUrl}
+                />
+              </div>
+            )}
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <label className="text-sm font-medium" htmlFor="mcp-headers">
@@ -1563,27 +1676,56 @@ function McpTab() {
                 </div>
               )}
             </div>
-            <CreateDialogFooter>
+            <CreateDialogFooter className="flex-col items-stretch gap-2 sm:flex-row sm:items-center sm:justify-between">
               <Button
-                onClick={() => {
-                  setShowCreate(false);
-                  setEditingServer(null);
-                }}
+                disabled={testState.status === "testing"}
+                onClick={handleTest}
                 type="button"
-                variant="ghost"
+                variant="outline"
               >
-                Cancel
-              </Button>
-              <Button disabled={creating || !formName.trim()} type="submit">
-                {creating ? (
+                {testState.status === "testing" ? (
                   <LoaderIcon className="size-4 animate-spin" />
-                ) : editingServer ? (
-                  <Check className="size-4" />
                 ) : (
-                  <PlusIcon className="size-4" />
+                  <Server className="size-4" />
                 )}
-                {editingServer ? "Save" : "Add Server"}
+                Test connection
               </Button>
+              <div className="flex items-center gap-2">
+                {testState.status === "ok" && (
+                  <span className="text-xs text-green-600">
+                    ✓ {testState.toolCount} tool
+                    {testState.toolCount === 1 ? "" : "s"}
+                  </span>
+                )}
+                {testState.status === "error" && (
+                  <span
+                    className="max-w-[220px] truncate text-xs text-destructive"
+                    title={testState.error}
+                  >
+                    ✕ {testState.error}
+                  </span>
+                )}
+                <Button
+                  onClick={() => {
+                    setShowCreate(false);
+                    setEditingServer(null);
+                  }}
+                  type="button"
+                  variant="ghost"
+                >
+                  Cancel
+                </Button>
+                <Button disabled={creating || !formName.trim()} type="submit">
+                  {creating ? (
+                    <LoaderIcon className="size-4 animate-spin" />
+                  ) : editingServer ? (
+                    <Check className="size-4" />
+                  ) : (
+                    <PlusIcon className="size-4" />
+                  )}
+                  {editingServer ? "Save" : "Add Server"}
+                </Button>
+              </div>
             </CreateDialogFooter>
           </form>
         </CreateDialogContent>

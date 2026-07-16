@@ -412,27 +412,44 @@ export async function POST(request: Request) {
     const stream = createUIMessageStream({
       originalMessages: isToolApprovalFlow ? uiMessages : undefined,
       execute: async ({ writer: dataStream }) => {
-        // Pre-fetch MCP tool names so the tool planner can include them
+        // Connect MCP servers ONCE here and reuse the shared clients in
+        // createChatAgent. Derive the tool names once so the planner and the
+        // agent register an identical set — a mismatch would cause the
+        // agent's MCP tools to be filtered out by the planner.
         const mcpToolNamesForPlan: string[] = [];
         if (supportsTools) {
-          try {
-            const mcpServers = await getMcpServersByUserId({
-              userId: session.user.id,
-            });
-            const enabledServers = mcpServers.filter((s) => s.enabled);
-            await Promise.all(enabledServers.map((s) => connectToMcpServer(s)));
-            for (const server of enabledServers) {
-              const client = getClient(server.id);
-              if (!client) {
-                continue;
-              }
+          const mcpServers = await getMcpServersByUserId({
+            userId: session.user.id,
+          });
+          const enabledServers = mcpServers.filter((s) => s.enabled);
+          await Promise.all(
+            enabledServers.map((s) =>
+              connectToMcpServer(s).then((res) => {
+                if (res.error) {
+                  console.error(
+                    `[MCP] connect failed for ${s.name}:`,
+                    res.error
+                  );
+                }
+              })
+            )
+          );
+          for (const server of enabledServers) {
+            const client = getClient(server.id);
+            if (!client) {
+              continue;
+            }
+            try {
               const definitions = await client.listTools();
               for (const tool of definitions.tools) {
                 mcpToolNamesForPlan.push(tool.name);
               }
+            } catch (error) {
+              console.error(
+                `[MCP] listTools failed for ${server.name}:`,
+                error
+              );
             }
-          } catch {
-            // non-catalytic, continue without MCP
           }
         }
 
@@ -476,6 +493,7 @@ export async function POST(request: Request) {
           chatProjectId: chat?.projectId,
           enabledSkillsForInference,
           toolPlan,
+          mcpToolNamesForAgent: mcpToolNamesForPlan,
         });
 
         const result = await agent.stream({ messages: modelMessages });

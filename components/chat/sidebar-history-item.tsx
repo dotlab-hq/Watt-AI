@@ -1,5 +1,6 @@
 import { PinIcon, RefreshCwIcon } from "lucide-react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { memo, useCallback, useState } from "react";
 import { unstable_serialize, useSWRConfig } from "swr";
 import { regenerateChatTitle } from "@/app/(chat)/actions";
@@ -56,6 +57,13 @@ const PureChatItem = ({
 
   const { mutate } = useSWRConfig();
   const [regenerating, setRegenerating] = useState(false);
+  const pathname = usePathname();
+  const [navigating, setNavigating] = useState(false);
+
+  // Clear the navigating state once the route actually changes to this chat.
+  if (navigating && pathname === `/chat/${chat.id}`) {
+    setNavigating(false);
+  }
 
   const handleRegenerateTitle = useCallback(async () => {
     setRegenerating(true);
@@ -75,14 +83,25 @@ const PureChatItem = ({
         className={`h-8 rounded-none text-[13px] text-sidebar-foreground/50 transition-all duration-150 hover:bg-transparent hover:text-sidebar-foreground data-active:bg-transparent data-active:font-normal data-active:text-sidebar-foreground/50 data-[active=true]:text-sidebar-foreground data-[active=true]:font-medium data-[active=true]:border-b data-[active=true]:border-dashed data-[active=true]:border-sidebar-foreground/50 ${compact ? "pl-2" : ""}`}
         isActive={isActive}
       >
-        <Link href={`/chat/${chat.id}`} onClick={() => setOpenMobile(false)}>
-          <span className="truncate">
-            {showIndex && index !== undefined && (
-              <span className="mr-1.5 inline-block w-4 text-right text-[11px] text-sidebar-foreground/30">
-                {index + 1}.
-              </span>
+        <Link
+          href={`/chat/${chat.id}`}
+          onClick={() => {
+            setNavigating(true);
+            setOpenMobile(false);
+          }}
+        >
+          <span className="flex min-w-0 items-center gap-1.5">
+            {navigating && (
+              <RefreshCwIcon className="size-3 shrink-0 animate-spin text-sidebar-foreground/50" />
             )}
-            {chat.title}
+            <span className="truncate">
+              {showIndex && index !== undefined && (
+                <span className="mr-1.5 inline-block w-4 text-right text-[11px] text-sidebar-foreground/30">
+                  {index + 1}.
+                </span>
+              )}
+              {chat.title}
+            </span>
           </span>
         </Link>
       </SidebarMenuButton>

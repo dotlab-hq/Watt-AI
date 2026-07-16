@@ -164,7 +164,13 @@ export type CreateChatAgentParams = {
   chatProjectId?: string | null;
   enabledSkillsForInference: Array<{ providerReference: string | null }>;
   toolPlan?: ToolPlan;
-  /** Pre-connected MCP tool names (skips MCP connection inside createChatAgent) */
+  /**
+   * MCP tool names pre-resolved by the caller (the chat route). When provided,
+   * createChatAgent reuses the already-connected shared MCP clients instead of
+   * reconnecting, and registers exactly these tools so they survive the
+   * tool-planner filter. Omit to let createChatAgent connect and discover on
+   * its own.
+   */
   mcpToolNamesForAgent?: string[];
 };
 
@@ -343,10 +349,20 @@ export async function createChatAgent(params: CreateChatAgentParams) {
   }
 
   // ── MCP server tools ──────────────────────────────────────────────────
+  //
+  // The chat route connects MCP servers exactly once before calling
+  // createChatAgent and reuses the shared clients here. This keeps a single
+  // source of truth for tool names so the tool-planner (built in the route
+  // from the same pre-connected state) and the agent agree — otherwise a
+  // planner built from a different connection attempt can omit MCP tools and
+  // the agent's registered tools get silently filtered out.
 
   const mcpServers = await getMcpServersByUserId({ userId });
   const enabledServers = mcpServers.filter((s) => s.enabled);
-  await Promise.all(enabledServers.map((s) => connectToMcpServer(s)));
+
+  if (!params.mcpToolNamesForAgent) {
+    await Promise.all(enabledServers.map((s) => connectToMcpServer(s)));
+  }
 
   const mcpToolNames: string[] = [];
   const mcpAppToolNames: string[] = [];
@@ -366,7 +382,9 @@ export async function createChatAgent(params: CreateChatAgentParams) {
       const modelTools = client.toolsFromDefinitions(modelVisible);
       for (const [toolName, toolDef] of Object.entries(modelTools)) {
         tools[toolName] = toolDef;
-        activeTools.push(toolName);
+        if (!activeTools.includes(toolName)) {
+          activeTools.push(toolName);
+        }
         mcpToolNames.push(toolName);
       }
 
@@ -375,7 +393,9 @@ export async function createChatAgent(params: CreateChatAgentParams) {
       const appTools = client.toolsFromDefinitions(appVisible);
       for (const [toolName, toolDef] of Object.entries(appTools)) {
         tools[toolName] = toolDef;
-        activeTools.push(toolName);
+        if (!activeTools.includes(toolName)) {
+          activeTools.push(toolName);
+        }
         mcpAppToolNames.push(toolName);
       }
     } catch (error) {
