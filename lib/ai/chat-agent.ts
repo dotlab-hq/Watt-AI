@@ -463,12 +463,14 @@ export async function createChatAgent(params: CreateChatAgentParams) {
     activeTools.push("runParallel");
   }
 
-  const plannedActiveTools =
-    toolPlan?.activeTools === "all" || !toolPlan
-      ? activeTools
-      : activeTools.filter((toolName) =>
-          toolPlan.activeTools.includes(toolName)
-        );
+  // Tool-planner filter is disabled — the agent receives all tools always.
+  // const plannedActiveTools =
+  //   toolPlan?.activeTools === "all" || !toolPlan
+  //     ? activeTools
+  //     : activeTools.filter((toolName) =>
+  //         toolPlan.activeTools.includes(toolName)
+  //       );
+  const plannedActiveTools = activeTools;
 
   // ── Reasoning effort ──────────────────────────────────────────────────
 
