@@ -60,14 +60,45 @@ export interface MemorySearchResult {
 
 let _client: MongoClient | null = null;
 let _db: Db | null = null;
+let _connecting: Promise<void> | null = null;
 
 function getCollectionName(tier: MemoryTier): string {
   return `memory_${tier}`;
 }
 
-export function getDb(): Db {
-  if (_db) {
-    return _db;
+/**
+ * Connect (or reconnect) the shared MongoClient. The client is module-cached
+ * and reused across requests; if its topology has closed (idle timeout, HMR,
+ * Atlas drop) we discard it and build a fresh one so callers don't get
+ * stuck on MongoTopologyClosedError. Every memory op awaits ensureIndexes(),
+ * which calls this first, so the connect is always resolved before use.
+ */
+
+// `topology` exists at runtime but isn't in mongodb's public types.
+type ClientWithTopology = MongoClient & {
+  topology?: { isClosed(): boolean };
+};
+
+async function connectMemory(): Promise<Db> {
+  if (_db && _client && !(_client as ClientWithTopology).topology?.isClosed()) {
+    try {
+      await _db.command({ ping: 1 });
+      return _db;
+    } catch {
+      // The driver can retain a client while its topology has been closed.
+      // Force a fresh connection instead of returning a dead Db handle.
+      await _client.close().catch(() => undefined);
+      _client = null;
+      _db = null;
+      _indexesEnsured = false;
+    }
+  }
+
+  // Topology went away — drop the dead client and rebuild.
+  if (_client && (_client as ClientWithTopology).topology?.isClosed()) {
+    _client = null;
+    _db = null;
+    _indexesEnsured = false;
   }
 
   const uri = process.env.MONGODB_URI;
@@ -77,8 +108,31 @@ export function getDb(): Db {
     );
   }
 
-  _client = new MongoClient(uri);
-  _db = _client.db(process.env.MONGODB_DB_NAME || "chatbot_memory");
+  if (!_client) {
+    _client = new MongoClient(uri, { maxPoolSize: 10 });
+  }
+
+  if (!_connecting) {
+    _connecting = _client
+      .connect()
+      .then(() => {
+        _db = _client!.db(process.env.MONGODB_DB_NAME || "chatbot_memory");
+        _connecting = null;
+      })
+      .catch((err) => {
+        _connecting = null;
+        throw err;
+      });
+  }
+
+  await _connecting;
+  return _db!;
+}
+
+export function getDb(): Db {
+  if (!_db) {
+    throw new Error("Memory DB not connected. Call ensureIndexes() first.");
+  }
   return _db;
 }
 
@@ -93,10 +147,11 @@ let _indexesEnsured = false;
 
 export async function ensureIndexes(): Promise<void> {
   if (_indexesEnsured) {
+    await connectMemory();
     return;
   }
 
-  const db = getDb();
+  const db = await connectMemory();
 
   for (const tier of [
     "session",
@@ -655,6 +710,7 @@ export async function closeMemoryConnection(): Promise<void> {
     await _client.close();
     _client = null;
     _db = null;
+    _connecting = null;
     _indexesEnsured = false;
   }
 }
